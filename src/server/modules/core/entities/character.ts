@@ -6,7 +6,7 @@ import { TimeOfDay } from '@modules/calendar';
 import { buildCommandHandler, ICommandDefinition, ICommandHandler } from '@core/commands/CommandHandler';
 import { catalog } from './catalog';
 import { Zone, BaseKeyedEntity } from './zone';
-import { ExitFlag, Room, RoomFlag } from './room';
+import { Room, RoomFlag } from './room';
 import { IItemDefinition, ItemContainer } from './item';
 import { Conversation } from './conversation';
 
@@ -57,7 +57,6 @@ export interface IDescriptionBundle {
 export class Character extends ItemContainer(BaseKeyedEntity) {
   definition: ICharacterDefinition;
   id: string;
-  key: string;
   name: string;
   admin: boolean;
   npc: boolean;
@@ -296,7 +295,7 @@ export class Player extends Character {
 
 // Match priority = exact key, keywords, key starts with, lowercase key starts with
 export const matchCharacters = (elements: Character[], identifier: string): Character[] => {
-  let matches = elements.filter((target) => target.key.toLowerCase() === identifier.toLowerCase());
+  let matches = elements.filter((target) => target.basicKey.toLowerCase() === identifier.toLowerCase());
   if (matches.length === 0) {
     matches = elements.filter((target) => target.keywords.includes(identifier.toLowerCase()));
   }

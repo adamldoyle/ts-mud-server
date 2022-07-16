@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "test": "jest ./src",
+    "test:watch": "jest ./src --watch",
     "game:start": "nodemon src/startGameServer.ts --settings ../settings.json",
     "proxy:start": "ts-node src/startProxyServer.ts --settings ../settings.json"
   },

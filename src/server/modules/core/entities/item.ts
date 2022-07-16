@@ -147,7 +147,7 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
 
 // Match priority = exact key, keywords, key starts with, lowercase key starts with
 export const matchItems = (elements: Item[], identifier: string): Item[] => {
-  let matches = elements.filter((target) => target.key.toLowerCase() === identifier.toLowerCase());
+  let matches = elements.filter((target) => target.basicKey.toLowerCase() === identifier.toLowerCase());
   if (matches.length === 0) {
     matches = elements.filter((target) => target.keywords.includes(identifier.toLowerCase()));
   }
