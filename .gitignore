@@ -1,0 +1,8 @@
+.vscode
+node_modules/
+lib/data/objects/
+data/accounts/*
+data/players/*
+data/dumps/*
+*.log
+settings.json

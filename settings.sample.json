@@ -1,0 +1,5 @@
+{
+  "proxyPort": 9999,
+  "serverPort": 9998,
+  "startingRoom": "limbo@limbo"
+}

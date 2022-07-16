@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "CommonJS",
+    "allowJs": true,
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@shared/*": ["shared/*"],
+      "@proxy/*": ["proxy/*"],
+      "@server/*": ["server/*"],
+      "@modules/*": ["server/modules/*"],
+      "@core/*": ["server/modules/core/*"],
+      "@zones": ["server/zones/index"]
+    }
+  },
+  "exclude": ["./node_modules"],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
+}
