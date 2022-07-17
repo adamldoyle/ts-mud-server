@@ -81,7 +81,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     this.name = definition.name;
     this.admin = definition.admin ?? false;
     this.npc = !Boolean((definition as IPlayerDefinition).accountId);
-    this.styledName = `<c>${stringUtils.capitalize(this.name)}<n>`;
+    this.styledName = `<${this.admin ? 'Y' : 'c'}>${stringUtils.capitalize(this.name)}<n>`;
     this.roomDescription = definition.roomDescription ?? `${this} is here.`;
     this.description = definition.description ?? `You see ${this}.`;
     this.keywords = definition.keywords?.map((keyword) => keyword.toLowerCase()) ?? [];
