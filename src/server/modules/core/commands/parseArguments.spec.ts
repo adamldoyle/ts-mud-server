@@ -4,7 +4,7 @@ import { Character, IPlayerDefinition } from '@core/entities/character';
 import { parseArguments } from './parseArguments';
 import { Instance } from '@server/GameServerInstance';
 import { createCatalog } from '../entities/catalog';
-import { buildZone, buildRoom, buildCharacter, buildItem, buildExit } from '../entities/testUtils';
+import { buildZone, buildRoom, buildCharacter, buildItem, buildExit, initializeTestServer } from '@server/testUtils';
 
 jest.mock('@server/GameServer');
 
@@ -15,9 +15,7 @@ describe('core/commands/parseArguments', () => {
   let invoker: Character;
   let npc: Character;
   beforeEach(() => {
-    Instance.gameServer = {
-      catalog: createCatalog(),
-    } as any;
+    initializeTestServer();
     zone = buildZone();
     Instance.gameServer?.catalog.registerZone(zone);
     invokerRoom = buildRoom(zone, 'testRoom1');

@@ -16,7 +16,7 @@ import {
 import { Player, Character } from '@core/entities/character';
 import { buildCommandHandler, ICommandHandler } from '@core/commands/CommandHandler';
 import { createCatalog, ICatalog } from '@core/entities/catalog';
-import { LoginConversation } from '@core/conversations/LoginConversation';
+import { LoginConversation } from '@modules/auth/LoginConversation';
 import { getPotentialAccount } from '@shared/account';
 import { calculateTime, TimeOfDay } from '@modules/calendar';
 import { registerCommands } from './modules';

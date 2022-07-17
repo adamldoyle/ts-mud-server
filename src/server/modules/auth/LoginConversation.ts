@@ -89,8 +89,7 @@ const handleNewCharacterConfirm = (state: NewCharacterConfirmState, sendMessage:
     player.save();
     state.account.characterNames.push(state.characterName);
     saveAccount(state.account);
-    sendMessage('Character created.');
-    sendMessage(`Assuming place of ${state.characterName}...`);
+    sendMessage(`Character created.\nAssuming place of ${state.characterName}...`);
     return { type: ConversationStateType.COMPLETE, account: state.account, player };
   } else if (rawInput.toLowerCase() === 'n') {
     outputCharacters(state.account, sendMessage);
@@ -115,7 +114,7 @@ const handleState = (state: ConversationState, sendMessage: SendMessage, rawInpu
 
 const outputCharacters = (account: ISavedAccount, sendMessage: SendMessage) => {
   sendMessage(
-    `\nChoose character:\n${account.characterNames.map((characterName, characterIdx) => `${characterIdx + 1}. ${characterName}`).join('\n')}\n${
+    `\nChoose character:\n${account.characterNames.map((characterName, characterIdx) => `${characterIdx + 1}: ${characterName}`).join('\n')}\n${
       account.characterNames.length + 1
     }: Create a new character\n\nChoice (#):`
   );

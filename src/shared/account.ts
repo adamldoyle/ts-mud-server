@@ -1,5 +1,5 @@
 import fs from 'fs';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { ISavedAccount } from './types';
 
 export const accountExists = (username: string): boolean => {
