@@ -3,7 +3,7 @@ import { stringUtils } from '@core/utils';
 import { Constructor } from './base';
 import { BaseKeyedEntity, Zone } from './zone';
 import { Character } from './character';
-import { catalog } from './catalog';
+import { Instance } from '@server/GameServerInstance';
 
 export interface IItemContainer {
   items: Item[];
@@ -100,7 +100,7 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
 
   finalize() {
     this.definition.inventory?.forEach((invDefinition) => {
-      const item = catalog.loadItem(invDefinition.key, this.zone, invDefinition);
+      const item = Instance.gameServer?.catalog.loadItem(invDefinition.key, this.zone, invDefinition);
       if (item) {
         this.addItem(item);
       }

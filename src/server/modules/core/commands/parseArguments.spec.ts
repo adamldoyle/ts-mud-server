@@ -1,74 +1,35 @@
-import { Exit, ExitFlag, IExitDefinition, Room } from '@core/entities/room';
+import { Exit, ExitFlag, Room } from '@core/entities/room';
 import { Zone } from '@core/entities/zone';
-import { Character, ICharacterDefinition, IPlayerDefinition } from '@core/entities/character';
+import { Character, IPlayerDefinition } from '@core/entities/character';
 import { parseArguments } from './parseArguments';
-import { IItemDefinition, Item } from '../entities/item';
-import { catalog } from '../entities/catalog';
+import { Instance } from '@server/GameServerInstance';
+import { createCatalog } from '../entities/catalog';
+import { buildZone, buildRoom, buildCharacter, buildItem, buildExit } from '../entities/testUtils';
 
 jest.mock('@server/GameServer');
 
-describe('parseArguments', () => {
-  const buildZone = () => {
-    return new Zone({ key: 'testZone', zoneName: 'Test zone' });
-  };
-
-  const buildRoom = (zone: Zone, key: string) => {
-    return new Room({ key: key, roomName: `${key} name`, description: `${key} description`, exits: [] }, zone);
-  };
-
-  const buildCharacter = (zone: Zone, key: string, definition: Partial<ICharacterDefinition>, room: Room) => {
-    return new Character(
-      {
-        key,
-        name: `${key} name`,
-        ...definition,
-      },
-      zone,
-      room
-    );
-  };
-
-  const buildItem = (zone: Zone, key: string, definition: Partial<IItemDefinition>) => {
-    return new Item(
-      {
-        key,
-        name: `${key} name`,
-        ...definition,
-      },
-      zone
-    );
-  };
-
-  const buildExit = (room: Room, destination: Room, direction: string, definition: Partial<IExitDefinition>): Exit => {
-    const exit = new Exit(
-      {
-        direction,
-        destination: destination.key,
-        ...definition,
-      },
-      otherRoom
-    );
-    room.exits[direction] = exit;
-    return exit;
-  };
-
+describe('core/commands/parseArguments', () => {
   let zone: Zone;
   let invokerRoom: Room;
   let otherRoom: Room;
   let invoker: Character;
   let npc: Character;
   beforeEach(() => {
+    Instance.gameServer = {
+      catalog: createCatalog(),
+    } as any;
     zone = buildZone();
+    Instance.gameServer?.catalog.registerZone(zone);
     invokerRoom = buildRoom(zone, 'testRoom1');
     otherRoom = buildRoom(zone, 'testRoom2');
-    invoker = buildCharacter(zone, 'invoker', { accountId: 'invokerAccount' } as IPlayerDefinition, invokerRoom);
-    npc = buildCharacter(zone, 'npc', {}, invokerRoom);
+    invoker = buildCharacter(zone, 'invoker', invokerRoom, { accountId: 'invokerAccount' } as IPlayerDefinition);
+    npc = buildCharacter(zone, 'npc', invokerRoom);
   });
 
   describe('character matching', () => {
     test('allows looking at character in room', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
-      buildCharacter(zone, 'otherUser2', {}, otherRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
+      buildCharacter(zone, 'otherUser2', otherRoom);
       let response = parseArguments(invoker, ['otherUser1'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
       response = parseArguments(invoker, ['otherUser2'], 'char.room');
@@ -83,7 +44,7 @@ describe('parseArguments', () => {
     });
 
     test('allows matching on character key with case insensitive matching', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
       let response = parseArguments(invoker, ['otherUser1'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
       response = parseArguments(invoker, ['OTHERUSER1'], 'char.room');
@@ -91,7 +52,7 @@ describe('parseArguments', () => {
     });
 
     test('allows matching on character key partial with case insensitive matching', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
       let response = parseArguments(invoker, ['otherUse'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
       response = parseArguments(invoker, ['OTHERUSE'], 'char.room');
@@ -99,7 +60,7 @@ describe('parseArguments', () => {
     });
 
     test('allows matching on character keywords with case insensitive matching', () => {
-      buildCharacter(zone, 'otherUser1', { keywords: ['other-keyword'] }, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom, { keywords: ['other-keyword'] });
       let response = parseArguments(invoker, ['other-keyword'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
       response = parseArguments(invoker, ['OTHER-KEYWORD'], 'char.room');
@@ -107,7 +68,7 @@ describe('parseArguments', () => {
     });
 
     test('allows matching on character name with case insensitive matching', () => {
-      buildCharacter(zone, 'otherUser1', { name: 'nameOfCharacter' }, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom, { name: 'nameOfCharacter' });
       let response = parseArguments(invoker, ['nameOfChar'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
       response = parseArguments(invoker, ['NAMEOFCHAR'], 'char.room');
@@ -115,29 +76,29 @@ describe('parseArguments', () => {
     });
 
     test('matching prefers full key to keywords', () => {
-      buildCharacter(zone, 'otherUser1', { keywords: ['otherUser2'] }, invokerRoom);
-      buildCharacter(zone, 'otherUser2', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom, { keywords: ['otherUser2'] });
+      buildCharacter(zone, 'otherUser2', invokerRoom);
       let response = parseArguments(invoker, ['otherUser2'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser2');
     });
 
     test('matching prefers keywords to partial key', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
-      buildCharacter(zone, 'otherUser2', { keywords: ['otherUser'] }, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
+      buildCharacter(zone, 'otherUser2', invokerRoom, { keywords: ['otherUser'] });
       let response = parseArguments(invoker, ['otherUser'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser2');
     });
 
     test('matching prefers partial key to partial name', () => {
-      buildCharacter(zone, 'otherUser1', { name: 'userKey' }, invokerRoom);
-      buildCharacter(zone, 'userKey2', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom, { name: 'userKey' });
+      buildCharacter(zone, 'userKey2', invokerRoom);
       let response = parseArguments(invoker, ['userKey'], 'char.room');
       expect(response?.[0].key).toEqual('userKey2');
     });
 
     test('restricts to room by default', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
-      buildCharacter(zone, 'otherUser2', {}, otherRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
+      buildCharacter(zone, 'otherUser2', otherRoom);
       let response = parseArguments(invoker, ['otherUser1'], 'char');
       expect(response?.[0].key).toEqual('otherUser1');
       response = parseArguments(invoker, ['otherUser2'], 'char');
@@ -145,14 +106,14 @@ describe('parseArguments', () => {
     });
 
     test('allows searching whole zone', () => {
-      buildCharacter(zone, 'otherUser2', {}, otherRoom);
+      buildCharacter(zone, 'otherUser2', otherRoom);
       const response = parseArguments(invoker, ['otherUser2'], 'char.zone');
       expect(response?.[0].key).toEqual('otherUser2');
     });
 
     test('allows restricting to npcs', () => {
-      buildCharacter(zone, 'npcChar', {}, invokerRoom);
-      buildCharacter(zone, 'playerChar', { accountId: 'playerAccount' } as IPlayerDefinition, invokerRoom);
+      buildCharacter(zone, 'npcChar', invokerRoom);
+      buildCharacter(zone, 'playerChar', invokerRoom, { accountId: 'playerAccount' } as IPlayerDefinition);
       let response = parseArguments(invoker, ['npcChar'], 'char.npc');
       expect(response?.[0].key).toEqual('npcChar');
       response = parseArguments(invoker, ['playerChar'], 'char.npc');
@@ -160,8 +121,8 @@ describe('parseArguments', () => {
     });
 
     test('allows restricting to players', () => {
-      buildCharacter(zone, 'npcChar', {}, invokerRoom);
-      buildCharacter(zone, 'playerChar', { accountId: 'playerAccount' } as IPlayerDefinition, invokerRoom);
+      buildCharacter(zone, 'npcChar', invokerRoom);
+      buildCharacter(zone, 'playerChar', invokerRoom, { accountId: 'playerAccount' } as IPlayerDefinition);
       let response = parseArguments(invoker, ['npcChar'], 'char.player');
       expect(response).toBeUndefined();
       response = parseArguments(invoker, ['playerChar'], 'char.player');
@@ -337,6 +298,13 @@ describe('parseArguments', () => {
     });
   });
 
+  describe('zone matching', () => {
+    test('matches a zone by key', () => {
+      const response = parseArguments(invoker, ['testZone'], 'zone');
+      expect(response).toEqual([zone]);
+    });
+  });
+
   describe('word matching', () => {
     test('matches a single word', () => {
       const response = parseArguments(invoker, ['testing'], 'word');
@@ -363,34 +331,34 @@ describe('parseArguments', () => {
 
   describe('general matching', () => {
     test('matches optional strings', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
       let response = parseArguments(invoker, ['at', 'otherUser1'], '[at] char.room');
       expect(response?.[0].key).toEqual('otherUser1');
     });
 
     test('can skip optional strings', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
       let response = parseArguments(invoker, ['otherUser1'], '[at] char.room');
       expect(response?.[0].key).toEqual('otherUser1');
     });
 
     test('fails if optional string is a mismatch', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
       let response = parseArguments(invoker, ['to', 'otherUser1'], '[at] char.room');
       expect(response).toBeUndefined();
     });
 
     test('supports declaring remainder optional', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
-      buildCharacter(zone, 'otherUser2', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
+      buildCharacter(zone, 'otherUser2', invokerRoom);
       let response = parseArguments(invoker, ['otherUser1'], 'char.room | char.room');
       expect(response?.length).toEqual(1);
       expect(response?.[0].key).toEqual('otherUser1');
     });
 
     test('supports declaring remainder optional', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
-      buildCharacter(zone, 'otherUser2', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
+      buildCharacter(zone, 'otherUser2', invokerRoom);
       let response = parseArguments(invoker, ['otherUser1', 'otherUser2'], 'char.room | char.room');
       expect(response?.length).toEqual(2);
       expect(response?.[0].key).toEqual('otherUser1');
@@ -398,16 +366,16 @@ describe('parseArguments', () => {
     });
 
     test('matches multiple parts', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
-      buildCharacter(zone, 'otherUser2', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
+      buildCharacter(zone, 'otherUser2', invokerRoom);
       const response = parseArguments(invoker, ['at', 'otherUser1', 'and', 'otherUser2'], '[at] char.room [and] char.room');
       expect(response?.[0].key).toEqual('otherUser1');
       expect(response?.[1].key).toEqual('otherUser2');
     });
 
     test('matches multiple parts with optionals missing', () => {
-      buildCharacter(zone, 'otherUser1', {}, invokerRoom);
-      buildCharacter(zone, 'otherUser2', {}, invokerRoom);
+      buildCharacter(zone, 'otherUser1', invokerRoom);
+      buildCharacter(zone, 'otherUser2', invokerRoom);
       const response = parseArguments(invoker, ['otherUser1', 'otherUser2'], '[at] char.room [and] char.room');
       expect(response?.[0].key).toEqual('otherUser1');
       expect(response?.[1].key).toEqual('otherUser2');
@@ -416,8 +384,8 @@ describe('parseArguments', () => {
 
   describe('complex matching', () => {
     test('matches as expected', () => {
-      const user1 = buildCharacter(zone, 'otherUser1', {}, invokerRoom);
-      const user2 = buildCharacter(zone, 'otherUser2', {}, invokerRoom);
+      const user1 = buildCharacter(zone, 'otherUser1', invokerRoom);
+      const user2 = buildCharacter(zone, 'otherUser2', invokerRoom);
       const item1 = buildItem(zone, 'testItem1', {});
       const item2 = buildItem(zone, 'testItem2', {});
       invokerRoom.addItem(item1);

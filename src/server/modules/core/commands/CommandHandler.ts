@@ -19,7 +19,7 @@ export interface ICommand {
 }
 
 export interface ICommandHandler {
-  getCommandDefinitions: () => Record<string, ICommandDefinition>;
+  getCommandDefinitions: () => ICommandDefinition[];
   registerCommand: (definition: ICommandDefinition) => void;
   handleCommand: (invoker: Character, rawInput: string, origin: any) => boolean;
 }
@@ -39,6 +39,7 @@ export const buildCommandHandler = (): ICommandHandler => {
   const commandDefinitions: Record<string, ICommandDefinition> = {};
 
   const registerCommand = (definition: ICommandDefinition) => {
+    definition.name = definition.name.toLowerCase();
     const command = definition.name;
     if (commandDefinitions[command]) {
       return logger.error(`Command already registered`, { command });
@@ -51,7 +52,9 @@ export const buildCommandHandler = (): ICommandHandler => {
   };
 
   const getCommandDefinitions = () => {
-    return commandDefinitions;
+    return Object.entries(commandDefinitions)
+      .filter(([commandKey, definition]) => commandKey === definition.name)
+      .map(([_, commandDefinition]) => commandDefinition);
   };
 
   const handleCommand = (invoker: Character, rawInput: string, origin: any): boolean => {
@@ -75,12 +78,11 @@ export const buildCommandHandler = (): ICommandHandler => {
   };
 
   return {
+    commandDefinitions,
     getCommandDefinitions,
     registerCommand,
     handleCommand,
-  };
+  } as any;
 };
-
-export const commandHandler = buildCommandHandler();
 
 export { parseArguments };
