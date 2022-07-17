@@ -1,4 +1,4 @@
-import { buildCharacter, buildRoom, buildZone } from '../entities/testUtils';
+import { buildCharacter, buildRoom, buildZone } from '@server/testUtils';
 import { buildCommandHandler, parseInput } from './CommandHandler';
 
 describe('core/commands/CommandHandler', () => {

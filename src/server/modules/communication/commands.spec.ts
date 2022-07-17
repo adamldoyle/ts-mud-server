@@ -1,6 +1,6 @@
 import { Instance } from '@server/GameServerInstance';
 import { buildCommandHandler } from '@core/commands/CommandHandler';
-import { buildCharacter, buildPlayer, buildRoom, buildZone } from '@core/entities/testUtils';
+import { buildCharacter, buildPlayer, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { createCatalog } from '@core/entities/catalog';
 import { Character } from '@core/entities/character';
 import { registerCommands } from './commands';
@@ -9,11 +9,7 @@ describe('communication/commands', () => {
   let invoker: Character;
   let other: Character;
   beforeEach(() => {
-    Instance.gameServer = {
-      commandHandler: buildCommandHandler(),
-      catalog: createCatalog(),
-      logoutUser: jest.fn(),
-    } as any;
+    initializeTestServer();
 
     const zone = buildZone({}, true);
     const room = buildRoom(zone, 'testRoom');

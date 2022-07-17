@@ -1,8 +1,26 @@
 import { Instance } from '@server/GameServerInstance';
-import { ICharacterDefinition, Character, IPlayerDefinition, Player } from './character';
-import { IItemDefinition, Item } from './item';
-import { Room, IExitDefinition, Exit, IRoomDefinition } from './room';
-import { IZoneDefinition, Zone } from './zone';
+import { ICharacterDefinition, Character, IPlayerDefinition, Player } from '@core/entities/character';
+import { IItemDefinition, Item } from '@core/entities/item';
+import { Room, IExitDefinition, Exit, IRoomDefinition } from '@core/entities/room';
+import { IZoneDefinition, Zone } from '@core/entities/zone';
+import { buildCommandHandler } from '@core/commands/CommandHandler';
+import { createCatalog } from '@core/entities/catalog';
+import { GameServer } from './GameServer';
+
+export const initializeTestServer = (overrides?: Partial<GameServer>) => {
+  Instance.gameServer = {
+    config: {
+      proxyPort: 1,
+      serverPort: 2,
+      startingRoom: 'starterRoom@testZone',
+    },
+    commandHandler: buildCommandHandler(),
+    catalog: createCatalog(),
+    logoutUser: jest.fn(),
+    sendMessageToAccount: jest.fn(),
+    ...overrides,
+  } as any;
+};
 
 export const buildZone = (definition?: Partial<IZoneDefinition>, persist?: boolean) => {
   const zone = new Zone({ key: 'testZone', zoneName: 'Test zone', ...definition });
