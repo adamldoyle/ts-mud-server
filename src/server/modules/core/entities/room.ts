@@ -1,12 +1,12 @@
 import { flagUtils, stringUtils } from '@core/utils';
 import { calculateTime, TimeOfDay } from '@modules/calendar';
 import { buildCommandHandler, ICommandDefinition, ICommandHandler } from '@core/commands/CommandHandler';
-import { buildZonedKey, catalog } from './catalog';
-import { Zone, BaseKeyedEntity } from './zone';
+import { Zone, BaseKeyedEntity, buildZonedKey } from './zone';
 import { Character, ICharacterDefinition, ICharacterResetsDefinition } from './character';
 import { ItemContainer, IItemResetsDefinition } from './item';
 import { stripColors } from '@shared/color';
 import { logger } from '@shared/Logger';
+import { Instance } from '@server/GameServerInstance';
 
 export const DIRECTION_OPPOSITES: Record<string, string> = {
   north: 'south',
@@ -207,7 +207,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
       if (this.exits[exitDefinition.direction]) {
         throw new Error(`Exit direction collision in: ${this.key}`);
       }
-      const destination = catalog.lookupRoom(exitDefinition.destination, this.zone);
+      const destination = Instance.gameServer?.catalog.lookupRoom(exitDefinition.destination, this.zone);
       if (!destination) {
         logger.error(`Unknown exit from: ${this.key}`);
         delete this.exits[exitDefinition.direction];
@@ -218,7 +218,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
     });
 
     savedRoom?.characters.forEach((savedCharacterDefinition) => {
-      const characterDefinition = catalog.lookupCharacterDefinition(savedCharacterDefinition.key, this.zone);
+      const characterDefinition = Instance.gameServer?.catalog.lookupCharacterDefinition(savedCharacterDefinition.key, this.zone);
       const mergedDefinition: ICharacterDefinition = {
         ...(characterDefinition ?? {}),
         ...savedCharacterDefinition,
@@ -229,10 +229,12 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
     });
 
     savedRoom?.items.forEach((savedItemDefinition) => {
-      const itemDefinition = catalog.lookupItemDefinition(savedItemDefinition.key, this.zone);
+      const itemDefinition = Instance.gameServer?.catalog.lookupItemDefinition(savedItemDefinition.key, this.zone);
       if (itemDefinition) {
-        const item = catalog.loadItem(itemDefinition.key, this.zone, savedItemDefinition);
-        this.addItem(item);
+        const item = Instance.gameServer?.catalog.loadItem(itemDefinition.key, this.zone, savedItemDefinition);
+        if (item) {
+          this.addItem(item);
+        }
       }
     });
   }
@@ -308,7 +310,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
         : this.zone.characters.filter((character) => character.key === key);
       const shouldExist = !resetDefinition.times || resetDefinition.times.includes(timeOfDay);
       if (shouldExist && matches.length === 0) {
-        const character = catalog.loadCharacter(key, this.zone, this);
+        const character = Instance.gameServer?.catalog.loadCharacter(key, this.zone, this);
         if (character) {
           character.finalize();
           if (resetDefinition.creationMessage) {
@@ -329,7 +331,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
       const key = buildZonedKey(resetDefinition.key, this.zone);
       const matches = this.items.filter((item) => item.key === key);
       if (matches.length === 0) {
-        const item = catalog.loadItem(key, this.zone, resetDefinition);
+        const item = Instance.gameServer?.catalog.loadItem(key, this.zone, resetDefinition);
         if (item) {
           this.addItem(item);
         }

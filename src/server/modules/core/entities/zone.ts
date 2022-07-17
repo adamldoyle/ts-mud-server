@@ -1,7 +1,6 @@
 import fs from 'fs';
 import { logger } from '@shared/Logger';
 import { TimeOfDay } from '@modules/calendar';
-import { buildZonedKey, splitZonedKey } from '@core/entities/catalog';
 import { Base, Constructor } from './base';
 import { ISavedRoomDefinition, Room } from './room';
 import { Character } from './character';
@@ -15,6 +14,29 @@ export interface IKeyedEntity {
   key: string;
   zone: Zone;
 }
+
+export const buildZonedKey = (key: string, zone: Zone): string => {
+  if (!key) {
+    throw new Error(`No key provied to buildZonedKey`);
+  }
+  const pieces = key.split('@');
+  if (pieces.length === 2) {
+    return key;
+  }
+  if (pieces.length === 1) {
+    return `${key}@${zone.key}`;
+  }
+  throw new Error(`Invalid format: ${key}`);
+};
+
+export const splitZonedKey = (zonedKey: string): { key: string; zoneKey: string } => {
+  const pieces = zonedKey.split('@');
+  if (pieces.length !== 2) {
+    throw new Error(`Invalid zoned key: ${zonedKey}`);
+  }
+  const [key, zoneKey] = pieces;
+  return { key, zoneKey };
+};
 
 export function KeyedEntity<TBase extends Constructor>(Base: TBase) {
   return class extends Base {

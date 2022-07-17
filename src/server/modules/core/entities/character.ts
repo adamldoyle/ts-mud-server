@@ -1,10 +1,9 @@
 import fs from 'fs';
 import { v4 } from 'uuid';
-import { Instance } from '@server/GameServer';
+import { Instance } from '@server/GameServerInstance';
 import { flagUtils, stringUtils } from '@core/utils';
 import { TimeOfDay } from '@modules/calendar';
 import { buildCommandHandler, ICommandDefinition, ICommandHandler } from '@core/commands/CommandHandler';
-import { catalog } from './catalog';
 import { Zone, BaseKeyedEntity } from './zone';
 import { Room, RoomFlag } from './room';
 import { IItemDefinition, ItemContainer } from './item';
@@ -103,7 +102,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
 
   finalize() {
     this.definition.inventory?.forEach((invDefinition) => {
-      const item = catalog.loadItem(invDefinition.key, this.zone, invDefinition);
+      const item = Instance.gameServer?.catalog.loadItem(invDefinition.key, this.zone, invDefinition);
       if (item) {
         this.addItem(item);
       }
@@ -229,9 +228,9 @@ export class Player extends Character {
   accountId: string;
   lastSave: number;
   constructor(definition: IPlayerDefinition) {
-    let room = catalog.lookupRoom(definition.room);
+    let room = Instance.gameServer?.catalog.lookupRoom(definition.room);
     if (!room && Instance.gameServer?.config.startingRoom) {
-      room = catalog.lookupRoom(Instance.gameServer?.config.startingRoom);
+      room = Instance.gameServer?.catalog.lookupRoom(Instance.gameServer?.config.startingRoom);
     }
     if (!room) {
       throw new Error('Unable to place character in room');

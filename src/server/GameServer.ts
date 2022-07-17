@@ -14,13 +14,13 @@ import {
   CharacterLogin,
 } from '@shared/socketMessages';
 import { Player, Character } from '@core/entities/character';
-import { commandHandler } from '@core/commands/CommandHandler';
+import { buildCommandHandler, ICommandHandler } from '@core/commands/CommandHandler';
+import { createCatalog, ICatalog } from '@core/entities/catalog';
 import { LoginConversation } from '@core/conversations/LoginConversation';
 import { getPotentialAccount } from '@shared/account';
 import { calculateTime, TimeOfDay } from '@modules/calendar';
-import { catalog } from '@modules/core/entities/catalog';
-
-import './loader';
+import { registerCommands } from './modules';
+import { registerZones } from './zones';
 
 export const TICK_TIME = 1000;
 
@@ -33,6 +33,8 @@ export class GameServer {
   tickIntervalId?: ReturnType<typeof setInterval>;
   tickCounter: number;
   timeOfDay?: TimeOfDay;
+  catalog: ICatalog;
+  commandHandler: ICommandHandler;
 
   constructor(config: ISettings) {
     this.config = config;
@@ -41,12 +43,19 @@ export class GameServer {
     this.partialLogins = {};
     this.tickCounter = 0;
 
-    const socketServer = new Server().listen(this.config.serverPort);
-    socketServer.on('connection', this.onSocketConnect.bind(this));
     this.proxySocket = undefined;
+
+    this.catalog = createCatalog();
+    this.commandHandler = buildCommandHandler();
   }
 
   start() {
+    registerCommands();
+    registerZones();
+    logger.info(`Game server data initialized`);
+
+    const socketServer = new Server().listen(this.config.serverPort);
+    socketServer.on('connection', this.onSocketConnect.bind(this));
     logger.info(`Game server started`, { port: this.config.serverPort });
   }
 
@@ -100,7 +109,7 @@ export class GameServer {
       }
     }
 
-    if (commandHandler.handleCommand(player, rawInput, undefined)) {
+    if (this.commandHandler.handleCommand(player, rawInput, undefined)) {
       return;
     }
 
@@ -176,19 +185,19 @@ export class GameServer {
     this.tickCounter++;
     const newTimeOfDay = calculateTime().timeOfDay;
     if (this.timeOfDay !== newTimeOfDay) {
-      catalog.getZones().forEach((zone) => {
+      this.catalog.getZones().forEach((zone) => {
         zone.newTimeOfDay(newTimeOfDay);
       });
       this.timeOfDay = newTimeOfDay;
     }
-    catalog.getZones().forEach((zone) => {
+    this.catalog.getZones().forEach((zone) => {
       zone.tick(this.tickCounter);
     });
   }
 
   save() {
     console.log('Dumping zones');
-    catalog.getZones().forEach((zone) => {
+    this.catalog.getZones().forEach((zone) => {
       fs.writeFileSync(`data/dumps/${zone.key}.json`, JSON.stringify(zone.toJson(), null, 2), {
         encoding: 'utf-8',
       });
@@ -199,7 +208,3 @@ export class GameServer {
     process.exit(0);
   }
 }
-
-export const Instance: { gameServer?: GameServer } = {
-  gameServer: undefined,
-};

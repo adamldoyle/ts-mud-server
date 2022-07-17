@@ -1,7 +1,3 @@
-import { catalog } from './modules/core/entities/catalog';
+import { Instance } from './GameServerInstance';
 import './modules';
 import './zones';
-
-catalog.getZones().forEach((zone) => {
-  zone.finalize();
-});

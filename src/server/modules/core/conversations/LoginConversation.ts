@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { ISavedAccount } from '@shared/types';
 import { saveAccount } from '@shared/account';
-import { Instance } from '@server/GameServer';
+import { Instance } from '@server/GameServerInstance';
 import { IPlayerDefinition, Player } from '@core/entities/character';
 import { stringUtils } from '@core/utils';
 
