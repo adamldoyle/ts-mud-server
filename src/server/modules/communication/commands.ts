@@ -42,7 +42,7 @@ export const registerCommands = () => {
     handler: (invoker, command) => {
       const response = parseArguments(invoker, command.params, 'char.room.noself string');
       if (!response) {
-        return invoker.emitTo(`Whisper to whom what? &lt;here&gt;`);
+        return invoker.emitTo(`Whisper to whom what?`);
       }
       const target = response[0];
       const message = response[1];
@@ -59,11 +59,12 @@ export const registerCommands = () => {
         return invoker.emitTo(`Tell whom what?`);
       }
 
-      const [targetName, ...message] = command.params;
+      const [targetName, ...messageParts] = command.params;
       const target = Instance.gameServer?.playersByName[targetName.toLowerCase()];
       if (!target) {
         return invoker.emitTo(`They're not around.`);
       }
+      const message = messageParts.join(' ');
 
       invoker.emitTo(`You tell ${target}, "${message}"`);
       target.emitTo(`${invoker} tells you, "${message}"`);
