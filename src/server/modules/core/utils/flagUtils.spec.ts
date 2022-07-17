@@ -79,13 +79,13 @@ describe('core/utils/flagUtils', () => {
     describe('addFlag', () => {
       test('adds flag to merged value', () => {
         const flags = new flagUtils.Flags(1);
-        expect(flags.addFlag(TestFlag.THREE)).toEqual(5);
+        flags.addFlag(TestFlag.THREE);
         expect(flags.flags).toEqual(5);
       });
 
       test('does nothing if already added', () => {
         const flags = new flagUtils.Flags(5);
-        expect(flags.addFlag(TestFlag.THREE)).toEqual(5);
+        flags.addFlag(TestFlag.THREE);
         expect(flags.flags).toEqual(5);
       });
     });
@@ -93,13 +93,13 @@ describe('core/utils/flagUtils', () => {
     describe('removeFlag', () => {
       test('removes flag from merged value', () => {
         const flags = new flagUtils.Flags(5);
-        expect(flags.removeFlag(TestFlag.THREE)).toEqual(1);
+        flags.removeFlag(TestFlag.THREE);
         expect(flags.flags).toEqual(1);
       });
 
       test('does nothing if already removed', () => {
         const flags = new flagUtils.Flags(1);
-        expect(flags.removeFlag(TestFlag.THREE)).toEqual(1);
+        flags.removeFlag(TestFlag.THREE);
         expect(flags.flags).toEqual(1);
       });
     });

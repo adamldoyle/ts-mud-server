@@ -35,13 +35,11 @@ export class Flags<FlagType extends Flag> {
     return hasFlag(this.flags, flag);
   }
 
-  addFlag(flag: FlagType): FlagsType {
+  addFlag(flag: FlagType) {
     this.flags = addFlag(this.flags, flag);
-    return this.flags;
   }
 
-  removeFlag(flag: FlagType): FlagsType {
+  removeFlag(flag: FlagType) {
     this.flags = removeFlag(this.flags, flag);
-    return this.flags;
   }
 }
