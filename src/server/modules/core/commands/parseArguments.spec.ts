@@ -8,7 +8,7 @@ import { buildZone, buildRoom, buildCharacter, buildItem, buildExit } from '../e
 
 jest.mock('@server/GameServer');
 
-describe('parseArguments', () => {
+describe('core/commands/parseArguments', () => {
   let zone: Zone;
   let invokerRoom: Room;
   let otherRoom: Room;

@@ -1,10 +1,15 @@
-import { ICharacterDefinition, Character } from './character';
+import { Instance } from '@server/GameServerInstance';
+import { ICharacterDefinition, Character, IPlayerDefinition, Player } from './character';
 import { IItemDefinition, Item } from './item';
 import { Room, IExitDefinition, Exit, IRoomDefinition } from './room';
 import { IZoneDefinition, Zone } from './zone';
 
-export const buildZone = (definition?: Partial<IZoneDefinition>) => {
-  return new Zone({ key: 'testZone', zoneName: 'Test zone', ...definition });
+export const buildZone = (definition?: Partial<IZoneDefinition>, persist?: boolean) => {
+  const zone = new Zone({ key: 'testZone', zoneName: 'Test zone', ...definition });
+  if (persist) {
+    Instance.gameServer?.catalog.registerZone(zone);
+  }
+  return zone;
 };
 
 export const buildRoom = (zone: Zone, key: string, definition?: Partial<IRoomDefinition>) => {
@@ -12,7 +17,7 @@ export const buildRoom = (zone: Zone, key: string, definition?: Partial<IRoomDef
 };
 
 export const buildCharacter = (zone: Zone, key: string, room: Room, definition?: Partial<ICharacterDefinition>) => {
-  return new Character(
+  const char = new Character(
     {
       key,
       name: `${key} name`,
@@ -21,6 +26,21 @@ export const buildCharacter = (zone: Zone, key: string, room: Room, definition?:
     zone,
     room
   );
+  jest.spyOn(char, 'emitTo').mockImplementation(() => undefined);
+  return char;
+};
+
+export const buildPlayer = (key: string, room: Room, definition?: Partial<IPlayerDefinition>) => {
+  const player = new Player({
+    key,
+    accountId: key,
+    room: room.key,
+    playerNumber: 1,
+    name: `${key} name`,
+    ...definition,
+  });
+  jest.spyOn(player, 'emitTo').mockImplementation(() => undefined);
+  return player;
 };
 
 export const buildItem = (zone: Zone, key: string, definition?: Partial<IItemDefinition>) => {

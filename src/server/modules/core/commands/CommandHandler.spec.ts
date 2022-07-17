@@ -1,8 +1,7 @@
-import { Character } from '../entities/character';
 import { buildCharacter, buildRoom, buildZone } from '../entities/testUtils';
 import { buildCommandHandler, parseInput } from './CommandHandler';
 
-describe('CommandHandler', () => {
+describe('core/commands/CommandHandler', () => {
   describe('parseInput', () => {
     test('splits rawInput into appropriate pieces', () => {
       const result = parseInput('give item to person');
