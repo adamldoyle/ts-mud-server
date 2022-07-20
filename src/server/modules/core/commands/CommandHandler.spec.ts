@@ -84,11 +84,11 @@ describe('core/commands/CommandHandler', () => {
       const mockHandler = jest.fn();
       const definition = { name: 'command', requiresBalance: true, handler: mockHandler };
       handler.registerCommand(definition);
-      invoker.balancedAt = Date.now() + 2000;
+      invoker.unbalancedUntil = Date.now() + 2000;
       expect(handler.handleCommand(invoker, 'command', undefined)).toBeTruthy();
       expect(mockHandler).not.toBeCalled();
 
-      invoker.balancedAt = undefined;
+      invoker.unbalancedUntil = undefined;
       expect(handler.handleCommand(invoker, 'command', undefined)).toBeTruthy();
       expect(mockHandler).toBeCalled();
     });

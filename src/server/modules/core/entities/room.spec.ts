@@ -19,6 +19,7 @@ describe('core/entities/room', () => {
     npc = buildCharacter(zone, 'npc', origin);
     player = buildPlayer('npc', origin);
   });
+
   describe('Exit', () => {
     let destination: rooms.Room;
     beforeEach(() => {

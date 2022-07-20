@@ -70,7 +70,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
   conversation?: Conversation;
   commandHandler?: ICommandHandler;
   workingData: Record<string, any>;
-  balancedAt?: number;
+  unbalancedUntil?: number;
 
   constructor(definition: ICharacterDefinition, zone: Zone, room: Room) {
     super();
@@ -81,7 +81,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     this.name = definition.name;
     this.admin = definition.admin ?? false;
     this.npc = !Boolean((definition as IPlayerDefinition).accountId);
-    this.styledName = `<${this.admin ? 'Y' : 'c'}>${stringUtils.capitalize(this.name)}<n>`;
+    this.styledName = `<${this.admin ? 'Y' : 'c'}>${this.name}<n>`;
     this.roomDescription = definition.roomDescription ?? `${this} is here.`;
     this.description = definition.description ?? `You see ${this}.`;
     this.keywords = definition.keywords?.map((keyword) => keyword.toLowerCase()) ?? [];
@@ -128,17 +128,13 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     return `${title}${looker.admin ? ` [${this.key}]` : ''}\n${this.description}${inventory ? `\n\n${inventory}` : ''}`;
   }
 
-  lookAtInventory(looker: Character) {
-    return super.lookAtInventory(looker);
-  }
-
   roomLookAt(looker: Character) {
     return this.roomDescription;
   }
 
   follow(target: Character) {
     target.emitTo(`${this} is now following you.`);
-    this.emitTo(`You are now following ${target}`);
+    this.emitTo(`You are now following ${target}.`);
     this.following = target;
     target.followers.push(this);
   }
@@ -162,18 +158,21 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
   }
 
   balanced() {
-    return !this.balancedAt || Date.now() > this.balancedAt;
+    return !this.unbalancedUntil || Date.now() > this.unbalancedUntil;
   }
 
   balancedIn(): number | undefined {
-    if (!this.balancedAt || this.balanced()) {
+    if (!this.unbalancedUntil || this.balanced()) {
       return undefined;
     }
-    return Math.round((this.balancedAt - Date.now()) / 1000);
+    return Math.round((this.unbalancedUntil - Date.now()) / 1000);
   }
 
   unbalance(seconds: number) {
-    this.balancedAt = Date.now() + seconds * 1000;
+    const newUnbalancedUntil = Date.now() + seconds * 1000;
+    if (newUnbalancedUntil > (this.unbalancedUntil ?? 0)) {
+      this.unbalancedUntil = newUnbalancedUntil;
+    }
   }
 
   canWander() {
@@ -285,9 +284,10 @@ export class Player extends Character {
     const json = { ...super.toJson(), room: this.room.key };
     const stringified = JSON.stringify(json, null, 2);
     if (stringified) {
-      fs.writeFileSync(`data/players/${this.key.toLowerCase()}.json`, stringified, {
+      fs.writeFileSync(`data/players/${this.name.toLowerCase()}.json`, stringified, {
         encoding: 'utf-8',
       });
+      this.lastSave = Date.now();
     }
   }
 }

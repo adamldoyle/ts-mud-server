@@ -83,7 +83,7 @@ describe('communication/commands', () => {
 
       callCommand(invoker, `whisper ${other.basicKey} test message`);
       expect(invoker.emitTo).toBeCalledWith(`You whisper to ${other}, "test message"`);
-      expect(other.emitTo).toBeCalledWith(`<c>Invoker name<n> whispers to you, "test message"`);
+      expect(other.emitTo).toBeCalledWith(`<c>invoker name<n> whispers to you, "test message"`);
       expect(otherChar.emitTo).not.toBeCalled();
     });
 
