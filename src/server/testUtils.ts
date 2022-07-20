@@ -46,7 +46,8 @@ export const buildCharacter = (zone: Zone, key: string, room: Room, definition?:
     zone,
     room
   );
-  jest.spyOn(char, 'emitTo').mockImplementation(() => undefined);
+  jest.spyOn(char, 'emitTo');
+  jest.spyOn(char, 'sendCommand');
   return char;
 };
 
