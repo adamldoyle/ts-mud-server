@@ -227,7 +227,7 @@ describe('core/entities/catalog', () => {
 
       test('throws error if unknown item', () => {
         const room = new Room({ key: 'testRoom', roomName: 'Test room', description: '', exits: [] }, zone);
-        expect(() => catalog.loadItem('testItem@testZone', zone, room)).toThrow();
+        expect(() => catalog.loadItem('testItem@testZone', zone)).toThrow();
       });
     });
   });

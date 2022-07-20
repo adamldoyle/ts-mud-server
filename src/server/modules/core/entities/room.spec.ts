@@ -603,7 +603,7 @@ describe('core/entities/room', () => {
         expect(room.characters).toEqual([npc]);
       });
 
-      test(`doesn't remove character from previous zone or room`, () => {
+      test(`removes character from previous zone or room`, () => {
         const newZone = buildZone({ key: 'otherZone' }, true);
         const room = buildRoom(newZone, 'testKey');
         room.finalize();
@@ -613,8 +613,8 @@ describe('core/entities/room', () => {
 
         room.addCharacter(npc);
 
-        expect(zone.characters).toContain(npc);
-        expect(origin.characters).toContain(npc);
+        expect(zone.characters).not.toContain(npc);
+        expect(origin.characters).not.toContain(npc);
       });
     });
 

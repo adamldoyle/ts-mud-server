@@ -205,7 +205,6 @@ export const registerCommands = () => {
         return invoker.emitTo(`Character not found: ${command.rest}`);
       }
       invoker.room.emitTo(`${invoker} disappears in a cloud of smoke...`, [invoker]);
-      invoker.room.removeCharacter(invoker);
       target.room.addCharacter(invoker);
       invoker.sendCommand('look');
       target.room.emitTo(`${invoker} appears in a cloud of smoke...`, [invoker]);

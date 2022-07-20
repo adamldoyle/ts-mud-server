@@ -286,6 +286,9 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
   }
 
   addCharacter(character: Character) {
+    if (character.room) {
+      character.room.removeCharacter(character);
+    }
     this.zone.addCharacter(character);
     this.characters.push(character);
     character.room = this;
