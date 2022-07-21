@@ -6,3 +6,4 @@ data/players/*
 data/dumps/*
 *.log
 settings.json
+coverage
