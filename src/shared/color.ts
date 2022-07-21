@@ -57,5 +57,7 @@ export const stripColors = (input: string): string => {
     }
   }
   output += input.substring(lastIndex ?? 0);
+  output = output.replace(/</g, '&lt;');
+  output = output.replace(/>/g, '&gt;');
   return output;
 };
