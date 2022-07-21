@@ -60,7 +60,7 @@ describe('LoginConversation', () => {
       workingData: {},
     });
 
-    expect(fs.writeFileSync).toBeCalledWith('data/accounts/testUsername.json', expect.any(String), { encoding: 'utf-8' });
+    expect(fs.writeFileSync).toBeCalledWith('data/accounts/testusername.json', expect.any(String), { encoding: 'utf-8' });
     const savedFile = JSON.parse((fs.writeFileSync as jest.Mock).mock.calls[1][1]);
     expect(savedFile).toEqual({
       accountId: 'testAccountId',
@@ -97,7 +97,7 @@ describe('LoginConversation', () => {
       workingData: {},
     });
 
-    expect(fs.writeFileSync).toBeCalledWith('data/accounts/testUsername.json', expect.any(String), { encoding: 'utf-8' });
+    expect(fs.writeFileSync).toBeCalledWith('data/accounts/testusername.json', expect.any(String), { encoding: 'utf-8' });
     const savedFile = JSON.parse((fs.writeFileSync as jest.Mock).mock.calls[1][1]);
     expect(savedFile).toEqual({
       accountId: 'testAccountId',
