@@ -11,7 +11,6 @@ jest.mock('bcryptjs');
 describe('LoginConversation', () => {
   let starterRoom: Room;
   beforeEach(() => {
-    jest.clearAllMocks();
     initializeTestServer();
     const zone = buildZone({}, true);
     starterRoom = buildRoom(zone, 'starterRoom');
@@ -61,7 +60,7 @@ describe('LoginConversation', () => {
       workingData: {},
     });
 
-    expect(fs.writeFileSync).toBeCalledWith('data/accounts/testUsername.json', expect.any(String), { encoding: 'utf-8' });
+    expect(fs.writeFileSync).toBeCalledWith('data/accounts/testusername.json', expect.any(String), { encoding: 'utf-8' });
     const savedFile = JSON.parse((fs.writeFileSync as jest.Mock).mock.calls[1][1]);
     expect(savedFile).toEqual({
       accountId: 'testAccountId',
@@ -98,7 +97,7 @@ describe('LoginConversation', () => {
       workingData: {},
     });
 
-    expect(fs.writeFileSync).toBeCalledWith('data/accounts/testUsername.json', expect.any(String), { encoding: 'utf-8' });
+    expect(fs.writeFileSync).toBeCalledWith('data/accounts/testusername.json', expect.any(String), { encoding: 'utf-8' });
     const savedFile = JSON.parse((fs.writeFileSync as jest.Mock).mock.calls[1][1]);
     expect(savedFile).toEqual({
       accountId: 'testAccountId',

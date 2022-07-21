@@ -4,6 +4,7 @@ import { Constructor } from './base';
 import { BaseKeyedEntity, Zone } from './zone';
 import { Character } from './character';
 import { Instance } from '@server/GameServerInstance';
+import * as flagUtils from '../utils/flagUtils';
 
 export interface IItemContainer {
   items: Item[];
@@ -44,6 +45,11 @@ export interface IItemResetsDefinition extends Partial<IItemDefinition> {
   key: string;
 }
 
+export enum ItemFlag {
+  HEAVY = 1 << 0,
+  CONTAINER = 1 << 1,
+}
+
 export interface IItemDefinition {
   key: string;
   name: string;
@@ -51,10 +57,9 @@ export interface IItemDefinition {
   description?: string;
   keywords?: string[];
   modifications?: Record<string, string>;
-  carryable?: boolean;
   workingData?: Record<string, any>;
   inventory?: IItemResetsDefinition[];
-  holdsItems?: boolean;
+  flags?: ItemFlag[] | flagUtils.FlagsType;
 }
 
 export const applyModifications = (text: string, modifications?: Record<string, string>) => {
@@ -74,8 +79,9 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
   description: string;
   keywords: string[];
   container?: IItemContainer;
-  modifications?: Record<string, string>;
+  modifications: Record<string, string>;
   workingData: Record<string, any>;
+  flags: flagUtils.Flags<ItemFlag>;
 
   constructor(definition: IItemDefinition, zone: Zone) {
     super();
@@ -83,19 +89,22 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
     this.id = v4();
     this.definition = definition;
     this.modifications = definition.modifications ?? {};
-    this.name = applyModifications(definition.name, this.modifications);
-    this.styledName = `<y>${stringUtils.capitalize(this.name)}<n>`;
+    this.name = definition.name;
+    this.styledName = `<y>${this.name}<n>`;
     this.roomDescription = definition.roomDescription ?? `${this} is on the ground here.`;
     this.description = definition.description ?? `You see ${this}.`;
-    this.finalizeDescriptions();
     this.keywords = definition.keywords?.map((keyword) => keyword.toLowerCase()) ?? [];
     this.container = undefined;
     this.workingData = definition.workingData ?? {};
+    this.flags = new flagUtils.Flags(definition.flags);
+    this.applyItemModifications();
   }
 
-  finalizeDescriptions() {
-    this.roomDescription = applyModifications(this.roomDescription ?? `${this} is on the ground here.`, this.modifications);
-    this.description = applyModifications(this.description ?? `You see ${this}.`, this.modifications);
+  applyItemModifications() {
+    this.name = applyModifications(this.name, this.modifications);
+    this.styledName = applyModifications(this.styledName, this.modifications);
+    this.roomDescription = applyModifications(this.roomDescription, this.modifications);
+    this.description = applyModifications(this.description, this.modifications);
   }
 
   finalize() {
@@ -105,10 +114,6 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
         this.addItem(item);
       }
     });
-  }
-
-  emitTo(message: string) {
-    return;
   }
 
   lookAt(looker: Character) {
@@ -122,11 +127,11 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
   }
 
   canCarry(): boolean {
-    return this.definition.carryable !== false;
+    return !this.flags.hasFlag(ItemFlag.HEAVY);
   }
 
   canHoldItems(): boolean {
-    return this.definition.holdsItems ?? false;
+    return this.flags.hasFlag(ItemFlag.CONTAINER);
   }
 
   toJson(): IItemDefinition {

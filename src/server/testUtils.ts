@@ -18,6 +18,8 @@ export const initializeTestServer = (overrides?: Partial<GameServer>) => {
     catalog: createCatalog(),
     logoutUser: jest.fn(),
     sendMessageToAccount: jest.fn(),
+    handleCommand: jest.fn(),
+    sendMessageToCharacter: jest.fn(),
     ...overrides,
   } as any;
 };
@@ -44,7 +46,8 @@ export const buildCharacter = (zone: Zone, key: string, room: Room, definition?:
     zone,
     room
   );
-  jest.spyOn(char, 'emitTo').mockImplementation(() => undefined);
+  jest.spyOn(char, 'emitTo');
+  jest.spyOn(char, 'sendCommand');
   return char;
 };
 
@@ -54,10 +57,10 @@ export const buildPlayer = (key: string, room: Room, definition?: Partial<IPlaye
     accountId: key,
     room: room.key,
     playerNumber: 1,
-    name: `${key} name`,
+    name: `${key}name`,
     ...definition,
   });
-  jest.spyOn(player, 'emitTo').mockImplementation(() => undefined);
+  jest.spyOn(player, 'emitTo');
   return player;
 };
 

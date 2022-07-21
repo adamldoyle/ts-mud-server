@@ -10,6 +10,10 @@ export interface IZoneDefinition {
   zoneName: string;
 }
 
+export interface ISavedZoneDefinition extends IZoneDefinition {
+  rooms: ISavedRoomDefinition[];
+}
+
 export interface IKeyedEntity {
   key: string;
   zone: Zone;
@@ -81,15 +85,8 @@ export class Zone {
   }
 
   finalize() {
-    let savedRooms: ISavedRoomDefinition[] = [];
-    try {
-      if (fs.existsSync(`data/dumps/${this.key}.json`)) {
-        const rawZone = fs.readFileSync(`data/dumps/${this.key}.json`, 'utf-8');
-        savedRooms = JSON.parse(rawZone).rooms as ISavedRoomDefinition[];
-      }
-    } catch (err: any) {
-      logger.error(err?.message);
-    }
+    const savedZone = Zone.fromStorage(this.key);
+    const savedRooms = savedZone?.rooms ?? [];
     Object.values(this.rooms).forEach((room) => {
       const savedRoom = savedRooms.find((savedRoom) => room.key === savedRoom.key);
       room.finalize(savedRoom);
@@ -126,11 +123,25 @@ export class Zone {
     });
   }
 
-  toJson() {
+  toJson(): ISavedZoneDefinition {
     return {
       ...this.definition,
       rooms: Object.values(this.rooms).map((room) => room.toJson()),
     };
+  }
+
+  toStorage() {
+    fs.writeFileSync(`data/dumps/${this.key}.json`, JSON.stringify(this.toJson(), null, 2), {
+      encoding: 'utf-8',
+    });
+  }
+
+  static fromStorage(key: string): ISavedZoneDefinition | undefined {
+    if (fs.existsSync(`data/dumps/${key}.json`)) {
+      const rawZone = fs.readFileSync(`data/dumps/${key}.json`, 'utf-8');
+      return JSON.parse(rawZone) as ISavedZoneDefinition;
+    }
+    return undefined;
   }
 
   toString() {

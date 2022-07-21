@@ -63,8 +63,6 @@ export const registerCommands = () => {
 
     const inRoomFollowers = invoker.followers.filter((follower) => follower.room === room);
     room.emitTo(`${invoker}${inRoomFollowers.length > 0 ? `'s party` : ''} leaves ${exit.direction}.`, [invoker, ...inRoomFollowers]);
-    room.removeCharacter(invoker);
-
     const newRoom = exit.destination;
     newRoom.addCharacter(invoker);
     let oppositePretty = DIRECTION_OPPOSITES[exit.direction] ?? 'somewhere';
@@ -77,7 +75,6 @@ export const registerCommands = () => {
 
     inRoomFollowers.forEach((follower) => {
       follower.emitTo(`You follow ${invoker}...`);
-      room.removeCharacter(follower);
       newRoom.addCharacter(follower);
       follower.sendCommand('look');
     });

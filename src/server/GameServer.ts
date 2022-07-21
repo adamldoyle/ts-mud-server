@@ -59,7 +59,7 @@ export class GameServer {
     logger.info(`Game server started`, { port: this.config.serverPort });
   }
 
-  onSocketConnect(socket: Socket) {
+  private onSocketConnect(socket: Socket) {
     logger.info('Proxy server connected');
     this.proxySocket = socket;
     socket.on('disconnect', this.onSocketDisconnect.bind(this));
@@ -85,7 +85,7 @@ export class GameServer {
     this.sendMessageToAccount(this.playersByName[name.toLowerCase()].accountId, message);
   }
 
-  onUserInput(payload: IUserInputPayload) {
+  private onUserInput(payload: IUserInputPayload) {
     const player = this.playersById[payload.accountId];
     if (this.partialLogins[payload.accountId]) {
       this.partialLogins[payload.accountId].handleInput(payload.rawInput);
@@ -130,7 +130,7 @@ export class GameServer {
     player.sendCommand('look');
   }
 
-  onUserLogin(payload: IUserLoginPayload) {
+  private onUserLogin(payload: IUserLoginPayload) {
     const account = getPotentialAccount(payload.username);
     if (!account || payload.accountId !== account.accountId) {
       return logger.error(`Invalid account lookup`, { characterName: payload.username, accountId: payload.accountId });
@@ -158,7 +158,7 @@ export class GameServer {
     UserLogout.send(this.proxySocket, { accountId: accountId });
   }
 
-  onUserDisconnect(payload: IUserDisconnectPayload) {
+  private onUserDisconnect(payload: IUserDisconnectPayload) {
     logger.info(`onUserDisconnect`, { accountId: payload.accountId });
     if (this.playersById[payload.accountId]) {
       const player = this.playersById[payload.accountId];
@@ -169,9 +169,12 @@ export class GameServer {
     delete this.partialLogins[payload.accountId];
   }
 
-  onSocketDisconnect() {
+  private onSocketDisconnect() {
     logger.info('Proxy server disconnected');
     this.proxySocket = undefined;
+    Object.values(this.playersById).map((player) => {
+      player.disconnect(true);
+    });
     this.playersById = {};
     this.playersByName = {};
     this.partialLogins = {};
@@ -198,13 +201,7 @@ export class GameServer {
   save() {
     console.log('Dumping zones');
     this.catalog.getZones().forEach((zone) => {
-      fs.writeFileSync(`data/dumps/${zone.key}.json`, JSON.stringify(zone.toJson(), null, 2), {
-        encoding: 'utf-8',
-      });
+      zone.toStorage();
     });
-  }
-
-  shutdown() {
-    process.exit(0);
   }
 }

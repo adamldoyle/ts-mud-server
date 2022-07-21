@@ -13,17 +13,15 @@ export class Conversation {
   scheduledCommand?: ReturnType<typeof setTimeout>;
   subConversation?: Conversation;
   parentConversation?: Conversation;
-  done: boolean;
-  endConversationCallback?: Function;
+  endConversationCallback?: (data?: any) => void;
 
-  constructor(characters: Character[], endConversationCallback?: Function) {
+  constructor(characters: Character[], endConversationCallback?: (data?: any) => void) {
     this.id = v4();
     this.characters = characters;
     characters.forEach((character) => {
       character.conversation = this;
     });
     this.scheduledCommand = undefined;
-    this.done = false;
     this.endConversationCallback = endConversationCallback;
   }
 
@@ -63,7 +61,6 @@ export class Conversation {
   returnToConversation(data?: any) {}
 
   endConversation(data?: any) {
-    this.done = true;
     this.characters.forEach((character) => {
       character.conversation = this.parentConversation ?? undefined;
     });
@@ -71,11 +68,11 @@ export class Conversation {
       this.parentConversation.subConversation = undefined;
       this.parentConversation.returnToConversation(data);
     } else if (this.endConversationCallback) {
-      this.endConversationCallback();
+      this.endConversationCallback(data);
     }
   }
 
-  leaveConversation(character: Character) {
+  removeFromConversation(character: Character) {
     this.characters = this.characters.filter((other) => other !== character);
     character.conversation = undefined;
   }

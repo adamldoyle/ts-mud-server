@@ -49,14 +49,20 @@ export interface IExitDefinition {
 export class Exit {
   definition: IExitDefinition;
   direction: string;
+  origin: Room;
   destination: Room;
   flags: flagUtils.Flags<ExitFlag>;
 
-  constructor(definition: IExitDefinition, destination: Room) {
+  constructor(definition: IExitDefinition, origin: Room) {
     this.definition = definition;
     this.direction = definition.direction;
-    this.destination = destination;
+    this.origin = origin;
     this.flags = new flagUtils.Flags(definition.flags);
+    const destination = Instance.gameServer?.catalog.lookupRoom(definition.destination, this.origin.zone);
+    if (!destination) {
+      throw new Error(`Unknown exit from ${this.origin.key}`);
+    }
+    this.destination = destination;
   }
 
   canView(char: Character): boolean {
@@ -188,7 +194,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
     definition.key = this.key;
     this.definition = definition;
     this.name = definition.roomName;
-    this.styledName = `<g>${stringUtils.capitalize(this.name)}<n>`;
+    this.styledName = `<g>${this.name}<n>`;
     this.description = definition.description;
     this.flags = new flagUtils.Flags(definition.flags);
     this.exits = {};
@@ -207,14 +213,12 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
       if (this.exits[exitDefinition.direction]) {
         throw new Error(`Exit direction collision in: ${this.key}`);
       }
-      const destination = Instance.gameServer?.catalog.lookupRoom(exitDefinition.destination, this.zone);
-      if (!destination) {
-        logger.error(`Unknown exit from: ${this.key}`);
-        delete this.exits[exitDefinition.direction];
-        return;
+      try {
+        const exit = new Exit(exitDefinition, this);
+        this.exits[exit.direction] = exit;
+      } catch (err) {
+        logger.error(err);
       }
-      const exit = new Exit(exitDefinition, destination);
-      this.exits[exit.direction] = exit;
     });
 
     savedRoom?.characters.forEach((savedCharacterDefinition) => {
@@ -240,7 +244,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
   }
 
   canEnter(char: Character): boolean {
-    return this.flags.hasFlag(RoomFlag.NOMOB);
+    return !char.npc || !this.flags.hasFlag(RoomFlag.NOMOB);
   }
 
   canWanderInto(char: Character): boolean {
@@ -282,6 +286,9 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
   }
 
   addCharacter(character: Character) {
+    if (character.room) {
+      character.room.removeCharacter(character);
+    }
     this.zone.addCharacter(character);
     this.characters.push(character);
     character.room = this;
