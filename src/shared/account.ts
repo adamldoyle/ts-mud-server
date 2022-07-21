@@ -23,5 +23,5 @@ export const verifyPassword = (account: ISavedAccount, password: string): boolea
 };
 
 export const saveAccount = (account: ISavedAccount) => {
-  fs.writeFileSync(`data/accounts/${account.username}.json`, JSON.stringify(account, null, 2), { encoding: 'utf-8' });
+  fs.writeFileSync(`data/accounts/${account.username.toLowerCase()}.json`, JSON.stringify(account, null, 2), { encoding: 'utf-8' });
 };

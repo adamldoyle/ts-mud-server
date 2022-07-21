@@ -11,7 +11,6 @@ describe('core/entities/character', () => {
   let zone: Zone;
   let origin: Room;
   beforeEach(() => {
-    jest.clearAllMocks();
     initializeTestServer();
     zone = buildZone({}, true);
     origin = buildRoom(zone, 'origin');

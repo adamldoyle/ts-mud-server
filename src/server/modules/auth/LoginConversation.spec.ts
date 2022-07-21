@@ -11,7 +11,6 @@ jest.mock('bcryptjs');
 describe('LoginConversation', () => {
   let starterRoom: Room;
   beforeEach(() => {
-    jest.clearAllMocks();
     initializeTestServer();
     const zone = buildZone({}, true);
     starterRoom = buildRoom(zone, 'starterRoom');
