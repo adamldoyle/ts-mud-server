@@ -248,8 +248,15 @@ export class Player extends Character {
     }
   }
 
-  disconnect() {
-    this.room.emitTo(`${this} disappears in a cloud of smoke...`, [this]);
+  disconnect(suppressEmit?: boolean) {
+    if (!suppressEmit) {
+      this.room.emitTo(`${this} disappears in a cloud of smoke...`, [this]);
+    }
+    if (this.conversation) {
+      this.conversation.endConversation();
+    }
+    this.unfollow();
+    this.disband();
     this.room.removeCharacter(this);
   }
 

@@ -2,12 +2,12 @@ import { ExitFlag, Room } from '@core/entities/room';
 import { Zone } from '@core/entities/zone';
 import { Instance } from '@server/GameServerInstance';
 
-const zone = new Zone({ key: 'limbo', zoneName: 'Limbo' });
 export const registerZone = () => {
   if (!Instance.gameServer) {
     return;
   }
 
+  const zone = new Zone({ key: 'limbo', zoneName: 'Limbo' });
   Instance.gameServer.catalog.registerZone(zone);
   new Room(
     {
