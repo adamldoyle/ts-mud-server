@@ -19,8 +19,8 @@ export const registerCommands = () => {
 
       const target = response[0] as Character;
       const forcedCommand = response[1] as string;
-      invoker.emitTo(`You force ${target} to "${command}"`);
-      target.emitTo(`${invoker} forces you to "${command}"`);
+      invoker.emitTo(`You force ${target} to "${forcedCommand}"`);
+      target.emitTo(`${invoker} forces you to "${forcedCommand}"`);
       target.sendCommand(forcedCommand);
     },
   });
@@ -33,7 +33,7 @@ export const registerCommands = () => {
       zones.sort((a, b) => a.key.localeCompare(b.key));
 
       const buffer = zones.map((zone) => `[${zone.key}] ${zone}`).join('\n');
-      invoker.emitTo(`<G>Zones\n<B>${'-'.repeat(30)}\n<n>${buffer.length > 0 ? buffer : 'None'}`);
+      invoker.emitTo(`<G>Zones\n<B>${'-'.repeat(30)}<n>\n${buffer.length > 0 ? buffer : 'None'}`);
     },
   });
 
@@ -84,7 +84,7 @@ export const registerCommands = () => {
       definitions.sort((a, b) => a.key.localeCompare(b.key));
 
       const buffer = definitions.map((definition) => `[${definition.key}] <y>${definition.name}<n>`).join('\n');
-      invoker.emitTo(`<G>Rooms for ${zone}\n<B>${'-'.repeat(30)}\n<n>${buffer.length > 0 ? buffer : 'None'}`);
+      invoker.emitTo(`<G>Rooms for ${zone}\n<B>${'-'.repeat(30)}<n>\n${buffer.length > 0 ? buffer : 'None'}`);
     },
   });
 
@@ -127,10 +127,14 @@ export const registerCommands = () => {
     name: '@rgoto',
     admin: true,
     handler: (invoker, command) => {
+      if (!command.rest) {
+        return invoker.emitTo('Go where?');
+      }
       const room = Instance.gameServer?.catalog.lookupRoom(command.rest, invoker.room.zone);
       if (!room) {
         return invoker.emitTo('Unknown room.');
       }
+      invoker.emitTo(`You teleport through space in a cloud of smoke...`);
       invoker.room.emitTo(`${invoker} disappears in a cloud of smoke...`, [invoker]);
       invoker.room.removeCharacter(invoker);
       room.addCharacter(invoker);
@@ -163,7 +167,7 @@ export const registerCommands = () => {
       definitions.sort((a, b) => a.key.localeCompare(b.key));
 
       const buffer = definitions.map((definition) => `[${definition.key}] <y>${definition.name}<n>`).join('\n');
-      invoker.emitTo(`<G>Characters for ${zone}\n<B>${'-'.repeat(30)}\n<n>${buffer.length > 0 ? buffer : 'None'}`);
+      invoker.emitTo(`<G>Characters for ${zone}\n<B>${'-'.repeat(30)}<n>\n${buffer.length > 0 ? buffer : 'None'}`);
     },
   });
 
@@ -174,12 +178,16 @@ export const registerCommands = () => {
       if (!command.rest) {
         return invoker.emitTo('Load which character?');
       }
-      const character = Instance.gameServer?.catalog.loadCharacter(command.rest, invoker.room.zone, invoker.room);
-      if (!character) {
+      try {
+        const character = Instance.gameServer?.catalog.loadCharacter(command.rest, invoker.room.zone, invoker.room);
+        if (!character) {
+          return invoker.emitTo(`Unknown character: ${command.rest}`);
+        }
+        character.finalize();
+        invoker.room.emitTo(`${character} appears in a cloud of smoke...`, [character]);
+      } catch (error) {
         return invoker.emitTo(`Unknown character: ${command.rest}`);
       }
-      character.finalize();
-      invoker.room.emitTo(`${character} appears in a cloud of smoke.`, [character]);
     },
   });
 
@@ -204,6 +212,7 @@ export const registerCommands = () => {
       if (!target) {
         return invoker.emitTo(`Character not found: ${command.rest}`);
       }
+      invoker.emitTo(`You teleport through space in a cloud of smoke...`);
       invoker.room.emitTo(`${invoker} disappears in a cloud of smoke...`, [invoker]);
       target.room.addCharacter(invoker);
       invoker.sendCommand('look');
@@ -222,7 +231,7 @@ export const registerCommands = () => {
       definitions.sort((a, b) => a.key.localeCompare(b.key));
 
       const buffer = definitions.map((definition) => `[${definition.key}] <y>${definition.name}\n<D>${definition.description}<n>`).join('\n\n');
-      invoker.emitTo(`<G>Items for ${zone}\n<B>${'-'.repeat(30)}\n<n>${buffer.length > 0 ? buffer : 'None'}`);
+      invoker.emitTo(`<G>Items for ${zone}\n<B>${'-'.repeat(30)}<n>\n${buffer.length > 0 ? buffer : 'None'}`);
     },
   });
 

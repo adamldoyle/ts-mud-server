@@ -28,7 +28,7 @@ export const registerCommands = () => {
         return invoker.emitTo(`You look that way...\n${target.destination.lookAt(invoker)}`);
       }
 
-      for (const container of ['inv', 'eq', 'room']) {
+      for (const container of ['inv', 'room']) {
         response = parseArguments(invoker, command.params, `[at] item.${container}`);
         if (response) {
           const target = response[0] as Item;

@@ -1,8 +1,6 @@
 import { Instance } from '@server/GameServerInstance';
-import { createCatalog } from '@core/entities/catalog';
 import { Character, Player } from '@core/entities/character';
 import { buildCharacter, buildPlayer, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
-import { buildCommandHandler } from './CommandHandler';
 import { registerCommands } from './commands';
 import { calculateTime } from '@server/modules/calendar';
 
