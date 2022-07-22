@@ -1,4 +1,4 @@
-const TIME_ADJUSTMENT = 1657687104448; // Determines epoch
+export const TIME_ADJUSTMENT = 1657687104448; // Determines epoch
 const ACTUAL_SECONDS_PER_MINUTE = 3;
 const MINUTES_PER_HOUR = 60;
 const HOURS_PER_DAY = 24;

@@ -61,6 +61,7 @@ export const buildPlayer = (key: string, room: Room, definition?: Partial<IPlaye
     ...definition,
   });
   jest.spyOn(player, 'emitTo');
+  jest.spyOn(player, 'sendCommand');
   return player;
 };
 
