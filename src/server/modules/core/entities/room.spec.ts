@@ -569,9 +569,19 @@ describe('core/entities/room', () => {
         const char2 = buildCharacter(zone, 'otherChar2', room, { roomDescription: 'Char 2 in the room.' });
         const char3 = buildCharacter(zone, 'otherChar3', room, { roomDescription: 'Char 3 in the room.' });
         const output = room.lookAt(char2);
-        expect(output).toContain('Char 1 in the room.');
+        expect(output).toContain('\nChar 1 in the room. Char 3 in the room.');
         expect(output).not.toContain('Char 2 in the room.');
-        expect(output).toContain('Char 3 in the room.');
+      });
+
+      test('merges multiple of same character into one description', () => {
+        const room = buildRoom(zone, 'testKey');
+        room.finalize();
+        const char1 = buildCharacter(zone, 'otherChar1', room, { roomDescription: 'Char 1 in the room.' });
+        const char2 = buildCharacter(zone, 'otherChar2', room, { roomDescription: 'Char 2 in the room.' });
+        const char12 = buildCharacter(zone, 'otherChar1', room, { roomDescription: 'Char 1 in the room.' });
+        const char3 = buildCharacter(zone, 'otherChar3', room, { roomDescription: 'Char 3 in the room.' });
+        const output = room.lookAt(char2);
+        expect(output).toContain('\n(x2) Char 1 in the room. Char 3 in the room.');
       });
 
       test('shows items in room', () => {
@@ -582,8 +592,20 @@ describe('core/entities/room', () => {
         room.addItem(item1);
         room.addItem(item2);
         const output = room.lookAt(npc);
-        expect(output).toContain('Item 1 in the room.');
-        expect(output).toContain('Item 2 in the room.');
+        expect(output).toContain('\nItem 1 in the room. Item 2 in the room.');
+      });
+
+      test('merges multiple of same item into one description', () => {
+        const room = buildRoom(zone, 'testKey');
+        room.finalize();
+        const item1 = buildItem(zone, 'item1', { roomDescription: 'Item 1 in the room.' });
+        const item2 = buildItem(zone, 'item2', { roomDescription: 'Item 2 in the room.' });
+        const item12 = buildItem(zone, 'item1', { roomDescription: 'Item 1 in the room.' });
+        room.addItem(item1);
+        room.addItem(item2);
+        room.addItem(item12);
+        const output = room.lookAt(npc);
+        expect(output).toContain('\n(x2) Item 1 in the room. Item 2 in the room.');
       });
     });
 

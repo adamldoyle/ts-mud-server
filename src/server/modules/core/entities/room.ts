@@ -3,7 +3,7 @@ import { calculateTime, TimeOfDay } from '@modules/calendar';
 import { buildCommandHandler, ICommandDefinition, ICommandHandler } from '@core/commands/CommandHandler';
 import { Zone, BaseKeyedEntity, buildZonedKey } from './zone';
 import { Character, ICharacterDefinition, ICharacterResetsDefinition } from './character';
-import { ItemContainer, IItemResetsDefinition } from './item';
+import { ItemContainer, IItemResetsDefinition, Item } from './item';
 import { stripColors } from '@shared/color';
 import { logger } from '@shared/Logger';
 import { Instance } from '@server/GameServerInstance';
@@ -264,25 +264,47 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
       .join('\n');
     let charBuffer = this.characters
       .filter((character) => character !== looker)
-      .map((character) => character.roomLookAt(looker))
+      .reduce<[Character, number][]>((acc, character) => {
+        const existing = acc.find(([other]) => other.key === character.key);
+        if (existing) {
+          existing[1]++;
+        } else {
+          acc.push([character, 1]);
+        }
+        return acc;
+      }, [])
+      .map(([character, qty]) => `${qty > 1 ? `(x${qty}) ` : ''}${character.roomLookAt(looker)}`)
       .filter((description) => description)
       .join(' ');
     let itemBuffer = this.items
-      .map((item) => item.roomLookAt(looker))
+      .reduce<[Item, number][]>((acc, item) => {
+        const existing = acc.find(([other]) => other.key === item.key);
+        if (existing) {
+          existing[1]++;
+        } else {
+          acc.push([item, 1]);
+        }
+        return acc;
+      }, [])
+      .map(([item, qty]) => `${qty > 1 ? `(x${qty}) ` : ``}${item.roomLookAt(looker)}`)
       .filter((description) => description)
       .join(' ');
-    if (exitBuffer.length > 0) {
+    if (exitBuffer) {
       exitBuffer = `\n${exitBuffer}`;
     }
-    if (charBuffer.length > 0) {
-      charBuffer = `\n${charBuffer}`;
-    }
-    if (itemBuffer.length > 0) {
-      itemBuffer = `\n${itemBuffer}`;
+    let entityBuffer = '';
+    if (charBuffer || itemBuffer) {
+      if (charBuffer) {
+        entityBuffer += `\n${charBuffer}`;
+      }
+      if (itemBuffer) {
+        entityBuffer += `\n${itemBuffer}`;
+      }
+      entityBuffer += '\n';
     }
     const title = looker.admin ? `[${this.key}] ${this}` : `${this}`;
     const strippedTitle = stripColors(title);
-    return `\n${title}\n<B>${'-'.repeat(strippedTitle.length)}\n<n>${this.description}${exitBuffer}${itemBuffer}${charBuffer}`;
+    return `\n${title}\n<B>${'-'.repeat(strippedTitle.length)}\n<n>${this.description}\n${entityBuffer}${exitBuffer}`;
   }
 
   addCharacter(character: Character) {
