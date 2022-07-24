@@ -203,5 +203,9 @@ export class GameServer {
     this.catalog.getZones().forEach((zone) => {
       zone.toStorage();
     });
+    console.log('Saving players');
+    Object.values(this.playersById).forEach((player) => {
+      player.save();
+    });
   }
 }
