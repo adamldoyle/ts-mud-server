@@ -607,6 +607,19 @@ describe('core/entities/room', () => {
         const output = room.lookAt(npc);
         expect(output).toContain('\n(x2) Item 1 in the room. Item 2 in the room.');
       });
+
+      test('only merges items if same modifications on both items', () => {
+        const room = buildRoom(zone, 'testKey');
+        room.finalize();
+        const item1 = buildItem(zone, 'item1', { roomDescription: '{color} Item 1 in the room.', modifications: { color: 'red' } });
+        const item12 = buildItem(zone, 'item1', { roomDescription: '{color} Item 1 in the room.', modifications: { color: 'blue' } });
+        const item13 = buildItem(zone, 'item1', { roomDescription: '{color} Item 1 in the room.', modifications: { color: 'red' } });
+        room.addItem(item1);
+        room.addItem(item12);
+        room.addItem(item13);
+        const output = room.lookAt(npc);
+        expect(output).toContain('\n(x2) red Item 1 in the room. blue Item 1 in the room.');
+      });
     });
 
     describe('addCharacter', () => {

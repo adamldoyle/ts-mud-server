@@ -1,4 +1,5 @@
-import { flagUtils, stringUtils } from '@core/utils';
+import deepEqual from 'deep-equal';
+import { flagUtils } from '@core/utils';
 import { calculateTime, TimeOfDay } from '@modules/calendar';
 import { buildCommandHandler, ICommandDefinition, ICommandHandler } from '@core/commands/CommandHandler';
 import { Zone, BaseKeyedEntity, buildZonedKey } from './zone';
@@ -278,7 +279,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
       .join(' ');
     let itemBuffer = this.items
       .reduce<[Item, number][]>((acc, item) => {
-        const existing = acc.find(([other]) => other.key === item.key);
+        const existing = acc.find(([other]) => other.key === item.key && deepEqual(other.modifications, item.modifications, { strict: true }));
         if (existing) {
           existing[1]++;
         } else {
