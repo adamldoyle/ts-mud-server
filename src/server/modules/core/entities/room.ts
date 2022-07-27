@@ -279,7 +279,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
       .join(' ');
     let itemBuffer = this.items
       .reduce<[Item, number][]>((acc, item) => {
-        const existing = acc.find(([other]) => other.key === item.key && deepEqual(other.modifications, item.modifications, { strict: true }));
+        const existing = acc.find(([other]) => item.isSameItem(other));
         if (existing) {
           existing[1]++;
         } else {
@@ -313,7 +313,12 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
       character.room.removeCharacter(character);
     }
     this.zone.addCharacter(character);
-    this.characters.push(character);
+    const existingIndex = this.characters.findIndex((other) => other.key === character.key);
+    if (existingIndex !== -1) {
+      this.characters.splice(existingIndex, 0, character);
+    } else {
+      this.characters.push(character);
+    }
     character.room = this;
   }
 
