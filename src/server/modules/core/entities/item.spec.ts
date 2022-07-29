@@ -164,7 +164,7 @@ describe('core/entities/item', () => {
           modifications: { modKey: 'modValue' },
           workingData: { dataKey: 'dataValue' },
           inventory: [{ key: 'otherItemKey' }],
-          flags: [ItemFlag.HEAVY],
+          flags: [ItemFlag.NOCARRY],
         };
         const item = new Item(definition, zone);
         expect(item.id.length).toBeGreaterThan(0);
@@ -177,7 +177,7 @@ describe('core/entities/item', () => {
         expect(item.keywords).toEqual(['keyword1', 'keyword2']);
         expect(item.container).toBeUndefined();
         expect(item.workingData).toEqual({ dataKey: 'dataValue' });
-        expect(item.flags.flags).toEqual(ItemFlag.HEAVY);
+        expect(item.flags.flags).toEqual(ItemFlag.NOCARRY);
       });
 
       test('uses reasonable defaults if definition incomplete', () => {
@@ -265,8 +265,8 @@ describe('core/entities/item', () => {
     });
 
     describe('canCarry', () => {
-      test('depends on HEAVY flag', () => {
-        let item = buildItem(zone, 'testItem', { flags: [ItemFlag.HEAVY] });
+      test('depends on NOCARRY flag', () => {
+        let item = buildItem(zone, 'testItem', { flags: [ItemFlag.NOCARRY] });
         expect(item.canCarry()).toBeFalsy();
         item = buildItem(zone, 'testItem', { flags: [] });
         expect(item.canCarry()).toBeTruthy();
@@ -274,7 +274,7 @@ describe('core/entities/item', () => {
     });
 
     describe('canHoldItems', () => {
-      test('depends on HEAVY flag', () => {
+      test('depends on NOCARRY flag', () => {
         let item = buildItem(zone, 'testItem', { flags: [] });
         expect(item.canHoldItems()).toBeFalsy();
         item = buildItem(zone, 'testItem', { flags: [ItemFlag.CONTAINER] });

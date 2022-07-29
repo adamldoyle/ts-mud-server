@@ -62,7 +62,7 @@ export interface IItemResetsDefinition extends Partial<IItemDefinition> {
 }
 
 export enum ItemFlag {
-  HEAVY = 1 << 0,
+  NOCARRY = 1 << 0,
   CONTAINER = 1 << 1,
 }
 
@@ -143,7 +143,7 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
   }
 
   canCarry(): boolean {
-    return !this.flags.hasFlag(ItemFlag.HEAVY);
+    return !this.flags.hasFlag(ItemFlag.NOCARRY);
   }
 
   canHoldItems(): boolean {
