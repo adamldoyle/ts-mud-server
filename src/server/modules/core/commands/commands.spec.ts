@@ -110,4 +110,22 @@ describe('core/commands/commands', () => {
       expect(output).toContain(`Players: Player1, Player2`);
     });
   });
+
+  describe('roll', () => {
+    test('rolls a dice based on command', () => {
+      callCommand(player, 'roll 1d1');
+      expect(player.emitTo).toBeCalledWith(`You roll 1d1 for a total of 1.`);
+      expect(npc.emitTo).toBeCalledWith(`${player} rolls 1d1 for a total of 1.`);
+    });
+
+    test('shows message if no dice config', () => {
+      callCommand(player, 'roll');
+      expect(player.emitTo).toBeCalledWith(`Invalid syntax: roll {# of dice}d{# of sides}. For example: roll 2d20`);
+    });
+
+    test('shows message if invalid syntax', () => {
+      callCommand(player, 'roll 20');
+      expect(player.emitTo).toBeCalledWith(`Invalid syntax: roll {# of dice}d{# of sides}. For example: roll 2d20`);
+    });
+  });
 });
