@@ -2,13 +2,16 @@ import { Player } from '@core/entities/character';
 import { Instance } from '@server/GameServerInstance';
 import { logger } from '@shared/Logger';
 import { calculateTime } from '@server/modules/calendar';
+import { diceUtils } from '../utils';
 
 export const registerCommands = () => {
   if (!Instance.gameServer) {
     return;
   }
 
-  Instance.gameServer.commandHandler.registerCommand({
+  const commandHandler = Instance.gameServer.commandHandler;
+
+  commandHandler.registerCommand({
     name: 'quit',
     aliases: ['exit'],
     handler: (invoker) => {
@@ -21,17 +24,17 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  commandHandler.registerCommand({
     name: 'commands',
     handler: (invoker) => {
-      const definitions = (Instance.gameServer?.commandHandler.getCommandDefinitions() ?? [])
+      const definitions = (commandHandler.getCommandDefinitions() ?? [])
         .filter((definition) => invoker.admin || !definition.admin)
         .sort((a, b) => a.name.localeCompare(b.name));
       invoker.emitTo(`<G>Commands\n<B>${'-'.repeat(30)}\n<n>${definitions.map((command) => command.name).join('\n')}`);
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  commandHandler.registerCommand({
     name: 'save',
     handler: (invoker) => {
       invoker.save();
@@ -39,7 +42,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  commandHandler.registerCommand({
     name: 'time',
     aliases: ['date'],
     handler: (invoker) => {
@@ -47,7 +50,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  commandHandler.registerCommand({
     name: 'colors',
     handler: (invoker) => {
       invoker.emitTo(`
@@ -64,7 +67,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  commandHandler.registerCommand({
     name: 'who',
     handler: (invoker) => {
       const { admins, players } = Object.values(Instance.gameServer?.playersByName ?? {}).reduce<{ admins: Player[]; players: Player[] }>(
@@ -81,6 +84,20 @@ export const registerCommands = () => {
       admins.sort((a, b) => a.key.localeCompare(b.key));
       players.sort((a, b) => a.key.localeCompare(b.key));
       invoker.emitTo(`Admins: ${admins.length > 0 ? admins.join(', ') : 'None'}.\nPlayers: ${players.length > 0 ? players.join(', ') : 'None'}.`);
+    },
+  });
+
+  commandHandler.registerCommand({
+    name: 'roll',
+    handler: (invoker, command) => {
+      try {
+        const diceConfig = command.rest.toLowerCase();
+        const total = diceUtils.roll(diceConfig);
+        invoker.emitTo(`You roll ${diceConfig} for a total of ${total}.`);
+        invoker.room.emitTo(`${invoker} rolls ${diceConfig} for a total of ${total}.`, [invoker]);
+      } catch (err) {
+        invoker.emitTo(`Invalid syntax: roll {# of dice}d{# of sides}. For example: roll 2d20`);
+      }
     },
   });
 };
