@@ -1,5 +1,5 @@
+import deepEqual from 'deep-equal';
 import { v4 } from 'uuid';
-import { stringUtils } from '@core/utils';
 import { Constructor } from './base';
 import { BaseKeyedEntity, Zone } from './zone';
 import { Character } from './character';
@@ -23,7 +23,12 @@ export function ItemContainer<TBase extends Constructor>(Base: TBase) {
         item.container.items = item.container.items.filter((other) => other !== item);
       }
       item.container = this;
-      this.items.push(item);
+      const existingIndex = this.items.findIndex((other) => item.isSameItem(other));
+      if (existingIndex !== -1) {
+        this.items.splice(existingIndex, 0, item);
+      } else {
+        this.items.push(item);
+      }
     }
 
     removeItem(item: Item) {
@@ -35,7 +40,18 @@ export function ItemContainer<TBase extends Constructor>(Base: TBase) {
     }
 
     lookAtInventory(looker: Character) {
-      const buffer = this.items.map((item) => `  ${item}`).join('\n');
+      const buffer = this.items
+        .reduce<[Item, number][]>((acc, item) => {
+          const existing = acc.find(([other]) => item.isSameItem(other));
+          if (existing) {
+            existing[1]++;
+          } else {
+            acc.push([item, 1]);
+          }
+          return acc;
+        }, [])
+        .map(([item, qty]) => `  ${qty > 1 ? `(x${qty}) ` : ``}${item}`)
+        .join('\n');
       return `Inventory:\n${buffer || '  nothing'}`;
     }
   };
@@ -46,7 +62,7 @@ export interface IItemResetsDefinition extends Partial<IItemDefinition> {
 }
 
 export enum ItemFlag {
-  HEAVY = 1 << 0,
+  NOCARRY = 1 << 0,
   CONTAINER = 1 << 1,
 }
 
@@ -127,11 +143,15 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
   }
 
   canCarry(): boolean {
-    return !this.flags.hasFlag(ItemFlag.HEAVY);
+    return !this.flags.hasFlag(ItemFlag.NOCARRY);
   }
 
   canHoldItems(): boolean {
     return this.flags.hasFlag(ItemFlag.CONTAINER);
+  }
+
+  isSameItem(other: Item): boolean {
+    return other.key === this.key && deepEqual(other.modifications, this.modifications, { strict: true });
   }
 
   toJson(): IItemDefinition {

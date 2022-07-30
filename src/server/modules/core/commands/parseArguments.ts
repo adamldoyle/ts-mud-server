@@ -43,6 +43,7 @@ export const parseArguments = (invoker: Character, params: string[], syntax: str
     }
 
     if (syntaxPiece.startsWith('char')) {
+      const [charId, charIndex] = paramsPiece.split('.');
       let elements: Character[] = [];
       const checks: CharacterCheck[] = [];
       if (syntaxPiece.includes('zone')) {
@@ -60,14 +61,19 @@ export const parseArguments = (invoker: Character, params: string[], syntax: str
       }
       const matches = matchCharacters(
         elements.filter((target) => checks.every((check) => check(invoker, target))),
-        paramsPiece
+        charId
       );
       if (matches.length === 0) {
         return undefined;
       }
-      response.push(matches[0]);
+      const desiredIndex = charIndex ? parseInt(charIndex) - 1 : 0;
+      if (desiredIndex >= matches.length) {
+        return undefined;
+      }
+      response.push(matches[desiredIndex]);
       paramsPieceIndex++;
     } else if (syntaxPiece.startsWith('item')) {
+      const [itemId, itemIndex] = paramsPiece.split('.');
       let elements: Item[] = [];
       if (syntaxPiece.includes('inv')) {
         elements = invoker.items;
@@ -76,11 +82,15 @@ export const parseArguments = (invoker: Character, params: string[], syntax: str
       } else {
         elements = [...invoker.items, ...invoker.room.items];
       }
-      const matches = matchItems(elements, paramsPiece);
+      const matches = matchItems(elements, itemId);
       if (matches.length === 0) {
         return undefined;
       }
-      response.push(matches[0]);
+      const desiredIndex = itemIndex ? parseInt(itemIndex) - 1 : 0;
+      if (desiredIndex >= matches.length) {
+        return undefined;
+      }
+      response.push(matches[desiredIndex]);
       paramsPieceIndex++;
     } else if (syntaxPiece.startsWith('exit')) {
       let elements: Exit[] = Object.values(invoker.room.exits);

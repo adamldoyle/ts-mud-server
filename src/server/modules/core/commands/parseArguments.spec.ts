@@ -3,7 +3,6 @@ import { Zone } from '@core/entities/zone';
 import { Character, IPlayerDefinition } from '@core/entities/character';
 import { parseArguments } from './parseArguments';
 import { Instance } from '@server/GameServerInstance';
-import { createCatalog } from '../entities/catalog';
 import { buildZone, buildRoom, buildCharacter, buildItem, buildExit, initializeTestServer } from '@server/testUtils';
 
 jest.mock('@server/GameServer');
@@ -92,6 +91,17 @@ describe('core/commands/parseArguments', () => {
       buildCharacter(zone, 'userKey2', invokerRoom);
       let response = parseArguments(invoker, ['userKey'], 'char.room');
       expect(response?.[0].key).toEqual('userKey2');
+    });
+
+    test('supports returning 1-indexed result', () => {
+      buildCharacter(zone, 'otherUser1', invokerRoom, { keywords: ['user'] });
+      buildCharacter(zone, 'otherUser2', invokerRoom, { keywords: ['user'] });
+      let response = parseArguments(invoker, ['user.1'], 'char.room');
+      expect(response?.[0].key).toEqual('otherUser1');
+      response = parseArguments(invoker, ['user.2'], 'char.room');
+      expect(response?.[0].key).toEqual('otherUser2');
+      response = parseArguments(invoker, ['user.3'], 'char.room');
+      expect(response).toBeUndefined();
     });
 
     test('restricts to room by default', () => {
@@ -225,6 +235,19 @@ describe('core/commands/parseArguments', () => {
       invoker.addItem(item2);
       let response = parseArguments(invoker, ['itemKey'], 'item');
       expect(response?.[0]).toEqual(item2);
+    });
+
+    test('supports returning 1-indexed result', () => {
+      const item1 = buildItem(zone, 'testItem1', { keywords: ['item'] });
+      const item2 = buildItem(zone, 'testItem2', { keywords: ['item'] });
+      invoker.addItem(item1);
+      invoker.addItem(item2);
+      let response = parseArguments(invoker, ['item.1'], 'item');
+      expect(response?.[0]).toEqual(item1);
+      response = parseArguments(invoker, ['item.2'], 'item');
+      expect(response?.[0]).toEqual(item2);
+      response = parseArguments(invoker, ['item.3'], 'item');
+      expect(response).toBeUndefined();
     });
   });
 

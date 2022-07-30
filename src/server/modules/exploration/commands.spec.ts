@@ -52,10 +52,12 @@ describe('exploration/commands', () => {
 <g>testRoom name<n>
 <B>-------------
 <n>testRoom description
-  - <y>       north<n> :: otherRoom name
-  - <y>      [west]<n> :: otherRoom name
+
+<c>other1 name<n> is here.
 <y>roomItem name<n> is on the ground here.
-<c>other1 name<n> is here.`);
+
+  - <y>       north<n> :: otherRoom name
+  - <y>      [west]<n> :: otherRoom name`);
     });
 
     test('looks at character if param is character identifier', () => {
@@ -74,9 +76,11 @@ Inventory:
 <g>otherRoom name<n>
 <B>--------------
 <n>otherRoom description
+
+<c>other2 name<n> is here.
+
   - <y>       south<n> :: testRoom name
-  - <y>      [east]<n> :: testRoom name
-<c>other2 name<n> is here.`);
+  - <y>      [east]<n> :: testRoom name`);
     });
 
     test('looks at item in inventory if param is item identifier', () => {

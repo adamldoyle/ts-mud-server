@@ -41,6 +41,19 @@ describe('core/entities/item', () => {
         expect(itemContainer2.items).toEqual([item]);
         expect(item.container).toEqual(itemContainer2);
       });
+
+      test('adds item next to same item in container', () => {
+        const itemContainer = new TestItemContainer();
+        const otherItem1 = buildItem(zone, 'otherItem1');
+        itemContainer.addItem(otherItem1);
+        const item1 = buildItem(zone, 'item1');
+        itemContainer.addItem(item1);
+        const otherItem2 = buildItem(zone, 'otherItem2');
+        itemContainer.addItem(otherItem2);
+        const item12 = buildItem(zone, 'item1');
+        itemContainer.addItem(item12);
+        expect(itemContainer.items).toEqual([otherItem1, item12, item1, otherItem2]);
+      });
     });
 
     describe('removeItem', () => {
@@ -82,6 +95,32 @@ describe('core/entities/item', () => {
         itemContainer.addItem(item2);
         const output = itemContainer.lookAtInventory(invoker);
         expect(output).toEqual(`Inventory:\n  <y>testItem1 name<n>\n  <y>testItem2 name<n>`);
+      });
+
+      test('merges items with same key', () => {
+        const invoker = buildCharacter(zone, 'invoker', room);
+        const itemContainer = new TestItemContainer();
+        const item1 = buildItem(zone, 'testItem1');
+        const item2 = buildItem(zone, 'testItem2');
+        const item12 = buildItem(zone, 'testItem1');
+        itemContainer.addItem(item1);
+        itemContainer.addItem(item2);
+        itemContainer.addItem(item12);
+        const output = itemContainer.lookAtInventory(invoker);
+        expect(output).toEqual(`Inventory:\n  (x2) <y>testItem1 name<n>\n  <y>testItem2 name<n>`);
+      });
+
+      test('only merges items with same modifications', () => {
+        const invoker = buildCharacter(zone, 'invoker', room);
+        const itemContainer = new TestItemContainer();
+        const item1 = buildItem(zone, 'testItem1', { name: '{color} item', modifications: { color: 'red' } });
+        const item12 = buildItem(zone, 'testItem1', { name: '{color} item', modifications: { color: 'green' } });
+        const item13 = buildItem(zone, 'testItem1', { name: '{color} item', modifications: { color: 'red' } });
+        itemContainer.addItem(item1);
+        itemContainer.addItem(item12);
+        itemContainer.addItem(item13);
+        const output = itemContainer.lookAtInventory(invoker);
+        expect(output).toEqual(`Inventory:\n  (x2) <y>red item<n>\n  <y>green item<n>`);
       });
     });
   });
@@ -125,7 +164,7 @@ describe('core/entities/item', () => {
           modifications: { modKey: 'modValue' },
           workingData: { dataKey: 'dataValue' },
           inventory: [{ key: 'otherItemKey' }],
-          flags: [ItemFlag.HEAVY],
+          flags: [ItemFlag.NOCARRY],
         };
         const item = new Item(definition, zone);
         expect(item.id.length).toBeGreaterThan(0);
@@ -138,7 +177,7 @@ describe('core/entities/item', () => {
         expect(item.keywords).toEqual(['keyword1', 'keyword2']);
         expect(item.container).toBeUndefined();
         expect(item.workingData).toEqual({ dataKey: 'dataValue' });
-        expect(item.flags.flags).toEqual(ItemFlag.HEAVY);
+        expect(item.flags.flags).toEqual(ItemFlag.NOCARRY);
       });
 
       test('uses reasonable defaults if definition incomplete', () => {
@@ -226,8 +265,8 @@ describe('core/entities/item', () => {
     });
 
     describe('canCarry', () => {
-      test('depends on HEAVY flag', () => {
-        let item = buildItem(zone, 'testItem', { flags: [ItemFlag.HEAVY] });
+      test('depends on NOCARRY flag', () => {
+        let item = buildItem(zone, 'testItem', { flags: [ItemFlag.NOCARRY] });
         expect(item.canCarry()).toBeFalsy();
         item = buildItem(zone, 'testItem', { flags: [] });
         expect(item.canCarry()).toBeTruthy();
@@ -235,7 +274,7 @@ describe('core/entities/item', () => {
     });
 
     describe('canHoldItems', () => {
-      test('depends on HEAVY flag', () => {
+      test('depends on NOCARRY flag', () => {
         let item = buildItem(zone, 'testItem', { flags: [] });
         expect(item.canHoldItems()).toBeFalsy();
         item = buildItem(zone, 'testItem', { flags: [ItemFlag.CONTAINER] });

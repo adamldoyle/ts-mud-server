@@ -82,8 +82,8 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     this.admin = definition.admin ?? false;
     this.npc = !Boolean((definition as IPlayerDefinition).accountId);
     this.styledName = `<${this.admin ? 'Y' : 'c'}>${this.name}<n>`;
-    this.roomDescription = definition.roomDescription ?? `${this} is here.`;
-    this.description = definition.description ?? `You see ${this}.`;
+    this.roomDescription = definition.roomDescription || `${this} is here.`;
+    this.description = definition.description || `You see ${this}.`;
     this.keywords = definition.keywords?.map((keyword) => keyword.toLowerCase()) ?? [];
     this.following = undefined;
     this.followers = [];
