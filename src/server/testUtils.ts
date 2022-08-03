@@ -6,6 +6,9 @@ import { IZoneDefinition, Zone } from '@core/entities/zone';
 import { buildCommandHandler } from '@core/commands/CommandHandler';
 import { createCatalog } from '@core/entities/catalog';
 import { GameServer } from './GameServer';
+import { RaceType } from '@core/entities/race';
+import { ClassType } from '@core/entities/class';
+import { defaultAbilities } from '@core/entities/abilities';
 
 export const initializeTestServer = (overrides?: Partial<GameServer>) => {
   Instance.gameServer = {
@@ -58,6 +61,9 @@ export const buildPlayer = (key: string, room: Room, definition?: Partial<IPlaye
     room: room.key,
     playerNumber: 1,
     name: `${key}name`,
+    race: RaceType.HUMANOID,
+    class: ClassType.NONE,
+    abilities: defaultAbilities(),
     ...definition,
   });
   jest.spyOn(player, 'emitTo');

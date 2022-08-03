@@ -8,6 +8,9 @@ import { Zone, BaseKeyedEntity } from './zone';
 import { Room, RoomFlag } from './room';
 import { IItemDefinition, ItemContainer } from './item';
 import { Conversation } from './conversation';
+import { buildAbilities, IAbilities } from './abilities';
+import { IRace, Races, RaceType } from './race';
+import { Classes, ClassType, IClass } from './class';
 
 const PLAYER_SAVE_INTERVAL = 1 * 60 * 1000; // Once a minute
 
@@ -29,6 +32,9 @@ export interface ICharacterDefinition {
   description?: string;
   inventory?: IInventoryDefinition[];
   flags?: CharacterFlag[] | flagUtils.FlagsType;
+  race?: RaceType;
+  class?: ClassType;
+  abilities?: Partial<IAbilities>;
   tick?: (character: Character, tickCounter: number) => boolean | undefined;
   commands?: ICommandDefinition[];
   workingData?: Record<string, any>;
@@ -38,6 +44,9 @@ export interface IPlayerDefinition extends ICharacterDefinition {
   accountId: string;
   room: string;
   playerNumber: number;
+  race: RaceType;
+  class: ClassType;
+  abilities: IAbilities;
 }
 
 export interface ICharacterResetsDefinition extends Partial<ICharacterDefinition> {
@@ -65,6 +74,9 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
   description: string;
   keywords: string[];
   flags: flagUtils.Flags<CharacterFlag>;
+  race: IRace;
+  class: IClass;
+  abilities: IAbilities;
   following?: Character;
   followers: Character[];
   conversation?: Conversation;
@@ -85,11 +97,14 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     this.roomDescription = definition.roomDescription || `${this} is here.`;
     this.description = definition.description || `You see ${this}.`;
     this.keywords = definition.keywords?.map((keyword) => keyword.toLowerCase()) ?? [];
+    this.race = Races[definition.race ?? RaceType.HUMANOID];
+    this.class = Classes[definition.class ?? ClassType.NONE];
     this.following = undefined;
     this.followers = [];
     this.conversation = undefined;
     this.workingData = definition.workingData ?? {};
     this.flags = new flagUtils.Flags(definition.flags);
+    this.abilities = buildAbilities(definition.abilities);
 
     if ((definition.commands?.length ?? 0) > 0) {
       this.commandHandler = buildCommandHandler();
