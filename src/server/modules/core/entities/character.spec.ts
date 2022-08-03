@@ -4,6 +4,9 @@ import { buildCharacter, buildItem, buildPlayer, buildRoom, buildZone, initializ
 import { Character, CharacterFlag, ICharacterDefinition, IPlayerDefinition, matchCharacters, Player } from './character';
 import { Room, RoomFlag } from './room';
 import { Zone } from './zone';
+import { RaceType } from './race';
+import { ClassType } from './class';
+import { defaultAbilities } from './abilities';
 
 jest.mock('fs');
 
@@ -26,6 +29,11 @@ describe('core/entities/character', () => {
           admin: true,
           roomDescription: 'Test char room description',
           description: 'Test char look description',
+          race: RaceType.ELF,
+          class: ClassType.DRUID,
+          abilities: {
+            STRENGTH: { baseValue: 10, modifiers: {}, value: 10 },
+          },
           keywords: ['keyword1', 'KEYWORD2'],
           workingData: {
             key1: 'value1',
@@ -44,6 +52,9 @@ describe('core/entities/character', () => {
         expect(char.styledName).toEqual('<Y>Test char<n>');
         expect(char.roomDescription).toEqual('Test char room description');
         expect(char.description).toEqual('Test char look description');
+        expect(char.race.type).toEqual(RaceType.ELF);
+        expect(char.class.type).toEqual(ClassType.DRUID);
+        expect(char.abilities).toEqual({ ...defaultAbilities(), STRENGTH: { baseValue: 10, modifiers: {}, value: 10 } });
         expect(char.keywords).toEqual(['keyword1', 'keyword2']);
         expect(char.following).toBeUndefined();
         expect(char.followers).toEqual([]);
@@ -68,6 +79,9 @@ describe('core/entities/character', () => {
         expect(char.styledName).toEqual('<c>Test char<n>');
         expect(char.roomDescription).toEqual('<c>Test char<n> is here.');
         expect(char.description).toEqual('You see <c>Test char<n>.');
+        expect(char.race.type).toEqual(RaceType.HUMANOID);
+        expect(char.class.type).toEqual(ClassType.NONE);
+        expect(char.abilities).toEqual(defaultAbilities());
         expect(char.keywords).toEqual([]);
         expect(char.following).toBeUndefined();
         expect(char.followers).toEqual([]);
@@ -553,6 +567,9 @@ describe('core/entities/character', () => {
           playerNumber: 27,
           key: 'testplayer',
           name: 'Testplayer',
+          race: RaceType.GNOME,
+          class: ClassType.CLERIC,
+          abilities: defaultAbilities(),
         };
         const player = new Player(definition);
         expect(player.accountId).toEqual('testAccountId');
@@ -565,6 +582,9 @@ describe('core/entities/character', () => {
         expect(player.styledName).toEqual('<c>Testplayer<n>');
         expect(player.roomDescription).toEqual('<c>Testplayer<n> is here.');
         expect(player.description).toEqual('You see <c>Testplayer<n>.');
+        expect(player.race.type).toEqual(RaceType.GNOME);
+        expect(player.class.type).toEqual(ClassType.CLERIC);
+        expect(player.abilities).toEqual(defaultAbilities());
         expect(player.keywords).toEqual([]);
         expect(player.following).toBeUndefined();
         expect(player.followers).toEqual([]);
@@ -594,6 +614,9 @@ describe('core/entities/character', () => {
           playerNumber: 27,
           key: 'testplayer',
           name: 'Testplayer',
+          race: RaceType.GNOME,
+          class: ClassType.CLERIC,
+          abilities: defaultAbilities(),
           inventory: [{ key: 'testItem@testZone' }],
         };
         const player = new Player(definition);
@@ -610,6 +633,9 @@ describe('core/entities/character', () => {
           playerNumber: 27,
           key: 'testplayer',
           name: 'Testplayer',
+          race: RaceType.GNOME,
+          class: ClassType.CLERIC,
+          abilities: defaultAbilities(),
         };
         const player = new Player(definition);
         jest.spyOn(player.room, 'emitTo');
@@ -626,6 +652,9 @@ describe('core/entities/character', () => {
           playerNumber: 27,
           key: 'testplayer',
           name: 'Testplayer',
+          race: RaceType.GNOME,
+          class: ClassType.CLERIC,
+          abilities: defaultAbilities(),
         };
         const player = new Player(definition);
         jest.spyOn(player.room, 'emitTo');
@@ -730,6 +759,9 @@ describe('core/entities/character', () => {
               room: 'origin@testZone',
               playerNumber: 1,
               name: 'playername',
+              race: RaceType.HUMANOID,
+              class: ClassType.NONE,
+              abilities: defaultAbilities(),
               inventory: [],
               workingData: {},
             },
