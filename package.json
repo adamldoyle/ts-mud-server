@@ -6,6 +6,8 @@
   "scripts": {
     "test": "jest ./src",
     "test:watch": "jest ./src --watch --no-cache",
+    "lint": "eslint ./src",
+    "build": "npm run lint && npm run test",
     "game:start": "nodemon src/startGameServer.ts --settings ../settings.json",
     "proxy:start": "ts-node src/startProxyServer.ts --settings ../settings.json"
   },
@@ -24,11 +26,16 @@
     "@types/node": "^16.11.12",
     "@types/nodemon": "^1.19.1",
     "@types/uuid": "^8.3.3",
+    "@typescript-eslint/eslint-plugin": "^5.30.7",
+    "@typescript-eslint/parser": "^5.30.7",
+    "eslint": "^8.20.0",
+    "eslint-config-prettier": "^8.5.0",
     "jest": "^27.4.3",
     "nodemon": "^2.0.15",
+    "prettier": "^2.7.1",
     "ts-jest": "^27.1.1",
     "ts-node": "^10.4.0",
     "tsconfig-paths": "^3.12.0",
-    "typescript": "^4.5.2"
+    "typescript": "^4.7.4"
   }
 }

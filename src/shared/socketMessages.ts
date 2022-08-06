@@ -40,9 +40,11 @@ export interface ICharacterLoginPayload extends IMessagePayload {
 }
 export const CharacterLogin = generateMessagePair<ICharacterLoginPayload>('character.login');
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IUserLogoutPayload extends IMessagePayload {}
 export const UserLogout = generateMessagePair<IUserLogoutPayload>('user.logout');
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IUserDisconnectPayload extends IMessagePayload {}
 export const UserDisconnect = generateMessagePair<IUserDisconnectPayload>('user.disconnect');
 

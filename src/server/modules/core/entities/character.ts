@@ -39,7 +39,7 @@ export interface ICharacterDefinition {
   abilities?: Partial<IAbilities | IRawAbilities>;
   tick?: (character: Character, tickCounter: number) => boolean | undefined;
   commands?: ICommandDefinition[];
-  workingData?: Record<string, any>;
+  workingData?: Record<string, unknown>;
 }
 
 export interface IPlayerDefinition extends ICharacterDefinition {
@@ -83,7 +83,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
   followers: Character[];
   conversation?: Conversation;
   commandHandler?: ICommandHandler;
-  workingData: Record<string, any>;
+  workingData: Record<string, unknown>;
   unbalancedUntil?: number;
   equipment: IEquipment;
 
@@ -95,7 +95,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     this.key = definition.key;
     this.name = definition.name;
     this.admin = definition.admin ?? false;
-    this.npc = !Boolean((definition as IPlayerDefinition).accountId);
+    this.npc = !(definition as IPlayerDefinition).accountId;
     this.styledName = `<${this.admin ? 'Y' : 'c'}>${this.name}<n>`;
     this.roomDescription = definition.roomDescription || `${this} is here.`;
     this.description = definition.description || `You see ${this}.`;
@@ -138,6 +138,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   emitTo(message: string): undefined {
     return;
   }
@@ -149,6 +150,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     return `${title}${looker.admin ? ` [${this.key}]` : ''}\n${this.description}\n\n${equipment}${inventory ? `\n\n${inventory}` : ''}`;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   roomLookAt(looker: Character) {
     return this.roomDescription;
   }
@@ -203,7 +205,9 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     return !this.flags.hasFlag(CharacterFlag.SENTINEL) && !this.room.flags.hasFlag(RoomFlag.SENTINEL);
   }
 
-  save() {}
+  save() {
+    // No-op
+  }
 
   tick(tickCounter: number) {
     if (this.definition.tick?.(this, tickCounter)) {

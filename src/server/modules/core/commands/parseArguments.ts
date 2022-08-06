@@ -11,16 +11,16 @@ const noselfCheck: CharacterCheck = (invoker: Character, target: Character) => i
 const playerCheck: CharacterCheck = (invoker: Character, target: Character) => !target.npc;
 const npcCheck: CharacterCheck = (invoker: Character, target: Character) => target.npc;
 
-export const parseArguments = (invoker: Character, params: string[], syntax: string): any[] | undefined => {
+export const parseArguments = (invoker: Character, params: string[], syntax: string): unknown[] | undefined => {
   const syntaxPieces = syntax.split(' ');
 
-  const response: any[] = [];
+  const response: unknown[] = [];
 
   let paramsPieceIndex = 0;
   let remainingOptional = false;
   for (let syntaxPieceIndex = 0; syntaxPieceIndex < syntaxPieces.length; syntaxPieceIndex++) {
     let syntaxPiece = syntaxPieces[syntaxPieceIndex];
-    let paramsPiece = params[paramsPieceIndex];
+    const paramsPiece = params[paramsPieceIndex];
 
     const optional = syntaxPiece.startsWith('[') && syntaxPiece.endsWith(']');
     if (optional) {
