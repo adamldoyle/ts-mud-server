@@ -896,6 +896,7 @@ describe('core/entities/room', () => {
               name: 'Test char 1',
               commands: undefined,
               inventory: [],
+              equipment: {},
               workingData: {},
             },
           ],

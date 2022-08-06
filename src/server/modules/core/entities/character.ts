@@ -8,9 +8,10 @@ import { Zone, BaseKeyedEntity } from './zone';
 import { Room, RoomFlag } from './room';
 import { IItemDefinition, ItemContainer } from './item';
 import { Conversation } from './conversation';
-import { buildAbilities, IAbilities } from './abilities';
+import { buildAbilities, IAbilities, IRawAbilities } from './abilities';
 import { IRace, Races, RaceType } from './race';
 import { Classes, ClassType, IClass } from './class';
+import { BodyPosition, buildEquipment, emptyEquipment, IEquipment, IEquipmentDefinition, lookAtEquipment } from './equipment';
 
 const PLAYER_SAVE_INTERVAL = 1 * 60 * 1000; // Once a minute
 
@@ -31,10 +32,11 @@ export interface ICharacterDefinition {
   roomDescription?: string;
   description?: string;
   inventory?: IInventoryDefinition[];
+  equipment?: Partial<Record<BodyPosition, IEquipmentDefinition>>;
   flags?: CharacterFlag[] | flagUtils.FlagsType;
   race?: RaceType;
   class?: ClassType;
-  abilities?: Partial<IAbilities>;
+  abilities?: Partial<IAbilities | IRawAbilities>;
   tick?: (character: Character, tickCounter: number) => boolean | undefined;
   commands?: ICommandDefinition[];
   workingData?: Record<string, any>;
@@ -83,6 +85,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
   commandHandler?: ICommandHandler;
   workingData: Record<string, any>;
   unbalancedUntil?: number;
+  equipment: IEquipment;
 
   constructor(definition: ICharacterDefinition, zone: Zone, room: Room) {
     super();
@@ -105,6 +108,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     this.workingData = definition.workingData ?? {};
     this.flags = new flagUtils.Flags(definition.flags);
     this.abilities = buildAbilities(definition.abilities);
+    this.equipment = emptyEquipment();
 
     if ((definition.commands?.length ?? 0) > 0) {
       this.commandHandler = buildCommandHandler();
@@ -122,6 +126,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
         this.addItem(item);
       }
     });
+    buildEquipment(this, this.definition.equipment);
   }
 
   changeDescription(descriptionBundle: IDescriptionBundle, permanent: boolean) {
@@ -139,8 +144,9 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
 
   lookAt(looker: Character) {
     const title = `${this}`;
+    const equipment = lookAtEquipment(looker, this, true);
     const inventory = this.lookAtInventory(looker);
-    return `${title}${looker.admin ? ` [${this.key}]` : ''}\n${this.description}${inventory ? `\n\n${inventory}` : ''}`;
+    return `${title}${looker.admin ? ` [${this.key}]` : ''}\n${this.description}\n\n${equipment}${inventory ? `\n\n${inventory}` : ''}`;
   }
 
   roomLookAt(looker: Character) {
@@ -225,8 +231,14 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
 
   toJson(): ICharacterDefinition {
     const inventory = this.items.map((item) => item.toJson());
+    const equipment = Object.entries(this.equipment).reduce<Partial<Record<BodyPosition, IItemDefinition>>>((acc, [wearSpot, item]) => {
+      if (item) {
+        acc[wearSpot as BodyPosition] = item?.toJson();
+      }
+      return acc;
+    }, {});
 
-    return { ...this.definition, inventory, workingData: this.workingData };
+    return { ...this.definition, inventory, equipment, workingData: this.workingData };
   }
 
   sendCommand(rawInput: string) {

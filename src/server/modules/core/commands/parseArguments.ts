@@ -77,10 +77,12 @@ export const parseArguments = (invoker: Character, params: string[], syntax: str
       let elements: Item[] = [];
       if (syntaxPiece.includes('inv')) {
         elements = invoker.items;
+      } else if (syntaxPiece.includes('eq')) {
+        elements = Object.values(invoker.equipment).filter((item) => item) as Item[];
       } else if (syntaxPiece.includes('room')) {
         elements = invoker.room.items;
       } else {
-        elements = [...invoker.items, ...invoker.room.items];
+        elements = [...invoker.items, ...(Object.values(invoker.equipment).filter((item) => item) as Item[]), ...invoker.room.items];
       }
       const matches = matchItems(elements, itemId);
       if (matches.length === 0) {

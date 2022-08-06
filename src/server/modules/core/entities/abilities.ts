@@ -15,6 +15,7 @@ export interface IAbility {
   value: number;
 }
 
+export type IRawAbilities = Record<AbilityType, number>;
 export type IAbilities = Record<AbilityType, IAbility>;
 
 const defaultAbility = (): IAbility => ({
@@ -32,9 +33,13 @@ export const defaultAbilities = (): IAbilities => ({
   CHARISMA: defaultAbility(),
 });
 
-export const buildAbilities = (abilities?: Partial<IAbilities>): IAbilities => {
+export const buildAbilities = (abilities?: Partial<IAbilities | IRawAbilities>): IAbilities => {
   return Object.entries(abilities ?? {}).reduce<IAbilities>((acc, [abilityType, ability]) => {
-    acc[abilityType as AbilityType] = ability;
+    if (Number.isInteger(ability)) {
+      acc[abilityType as AbilityType] = { baseValue: ability, modifiers: {}, value: ability };
+    } else {
+      acc[abilityType as AbilityType] = ability;
+    }
     return acc;
   }, defaultAbilities());
 };

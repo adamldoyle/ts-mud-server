@@ -65,6 +65,9 @@ describe('exploration/commands', () => {
       expect(invoker.emitTo).toBeCalledWith(`<c>other1 name<n>
 You see <c>other1 name<n>.
 
+Equipment:
+  nothing
+
 Inventory:
   nothing`);
     });

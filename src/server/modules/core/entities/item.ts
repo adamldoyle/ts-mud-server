@@ -5,6 +5,7 @@ import { BaseKeyedEntity, Zone } from './zone';
 import { Character } from './character';
 import { Instance } from '@server/GameServerInstance';
 import * as flagUtils from '../utils/flagUtils';
+import { BodyPosition } from './equipment';
 
 export interface IItemContainer {
   items: Item[];
@@ -64,6 +65,7 @@ export interface IItemResetsDefinition extends Partial<IItemDefinition> {
 export enum ItemFlag {
   NOCARRY = 1 << 0,
   CONTAINER = 1 << 1,
+  WEARABLE = 1 << 2,
 }
 
 export interface IItemDefinition {
@@ -76,6 +78,7 @@ export interface IItemDefinition {
   workingData?: Record<string, any>;
   inventory?: IItemResetsDefinition[];
   flags?: ItemFlag[] | flagUtils.FlagsType;
+  wearSpots?: BodyPosition[];
 }
 
 export const applyModifications = (text: string, modifications?: Record<string, string>) => {

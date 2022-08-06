@@ -5,6 +5,7 @@ import { registerCommands } from './commands';
 import { Room } from '@core/entities/room';
 import { Zone } from '@core/entities/zone';
 import { ItemFlag } from '../core/entities/item';
+import { BodyPosition, wearItem } from '../core/entities/equipment';
 
 describe('items/commands', () => {
   let zone: Zone;
@@ -270,9 +271,179 @@ describe('items/commands', () => {
       invoker.addItem(item1);
       invoker.addItem(item2);
       callCommand(invoker, 'inventory');
-      expect(invoker.emitTo).toBeCalledWith(`Inventory:
+      expect(invoker.emitTo).toBeCalledWith(`${invoker}
+Inventory:
   <y>item1 name<n>
   <y>item2 name<n>`);
+    });
+
+    test('shows other character inventory', () => {
+      const item1 = buildItem(zone, 'item1');
+      const item2 = buildItem(zone, 'item2');
+      other1.addItem(item1);
+      invoker.addItem(item2);
+      callCommand(invoker, 'inventory other1');
+      expect(invoker.emitTo).toBeCalledWith(`${other1}
+Inventory:
+  <y>item1 name<n>`);
+    });
+  });
+
+  describe('equipment', () => {
+    test('shows invoker equipment', () => {
+      const item1 = buildItem(zone, 'item1');
+      const item2 = buildItem(zone, 'item2');
+      invoker.equipment.FEET = item1;
+      invoker.equipment.HANDS = item2;
+      callCommand(invoker, 'equipment');
+      expect(invoker.emitTo).toBeCalledWith(`${invoker}
+Equipment:
+  held (right): nothing
+   held (left): nothing
+          head: nothing
+    about body: nothing
+         torso: nothing
+          arms: nothing
+         hands: <y>item2 name<n>
+          legs: nothing
+          feet: <y>item1 name<n>`);
+    });
+
+    test('shows other character equipment', () => {
+      const item1 = buildItem(zone, 'item1');
+      const item2 = buildItem(zone, 'item2');
+      invoker.equipment.FEET = item1;
+      other1.equipment.HANDS = item2;
+      callCommand(invoker, 'equipment other1');
+      expect(invoker.emitTo).toBeCalledWith(`${other1}
+Equipment:
+  held (right): nothing
+   held (left): nothing
+          head: nothing
+    about body: nothing
+         torso: nothing
+          arms: nothing
+         hands: <y>item2 name<n>
+          legs: nothing
+          feet: nothing`);
+    });
+  });
+
+  describe('wear', () => {
+    test('shows message if item not in inventory', () => {
+      callCommand(invoker, 'wear item1');
+      expect(invoker.emitTo).toBeCalledWith(`You don't have that.`);
+      expect(other1.emitTo).not.toBeCalled();
+    });
+
+    test('shows message if error occurred while trying to wear item', () => {
+      const item1 = buildItem(zone, 'item1');
+      invoker.addItem(item1);
+      callCommand(invoker, 'wear item1');
+      expect(invoker.emitTo).toBeCalledWith(`It's not wearable.`);
+      expect(other1.emitTo).not.toBeCalled();
+      expect(invoker.items).toEqual([item1]);
+    });
+
+    test('adds item to equipment', () => {
+      const item1 = buildItem(zone, 'item1', { flags: [ItemFlag.WEARABLE], wearSpots: [BodyPosition.HANDS] });
+      invoker.addItem(item1);
+      callCommand(invoker, 'wear item1');
+      expect(invoker.emitTo).toBeCalledWith(`You wear ${item1} on your hands.`);
+      expect(other1.emitTo).toBeCalledWith(`${invoker} wears ${item1} on their hands.`);
+      expect(invoker.equipment.HANDS).toEqual(item1);
+      expect(invoker.items).toEqual([]);
+    });
+  });
+
+  describe('remove', () => {
+    test('shows message if not wearing item', () => {
+      const item1 = buildItem(zone, 'item1', { flags: [ItemFlag.WEARABLE], wearSpots: [BodyPosition.HANDS] });
+      invoker.addItem(item1);
+      callCommand(invoker, 'remove item1');
+      expect(invoker.emitTo).toBeCalledWith(`You're not wearing that.`);
+      expect(other1.emitTo).not.toBeCalled();
+      expect(invoker.equipment.HANDS).toBeUndefined();
+      expect(invoker.items).toEqual([item1]);
+    });
+
+    // If we ever add stipulations on removing a worn item, add tests for the error cases
+
+    test('removes item and adds it to inventory', () => {
+      const item1 = buildItem(zone, 'item1', { flags: [ItemFlag.WEARABLE], wearSpots: [BodyPosition.HANDS] });
+      invoker.addItem(item1);
+      wearItem(invoker, item1);
+      expect(invoker.equipment.HANDS).toEqual(item1);
+      expect(invoker.items).toEqual([]);
+      callCommand(invoker, 'remove item1');
+      expect(invoker.emitTo).toBeCalledWith(`You remove ${item1} from your hands.`);
+      expect(other1.emitTo).toBeCalledWith(`${invoker} removes ${item1} from their hands.`);
+      expect(invoker.equipment.HANDS).toBeUndefined();
+      expect(invoker.items).toEqual([item1]);
+    });
+  });
+
+  describe('swap', () => {
+    test('shows message if hands empty', () => {
+      callCommand(invoker, 'swap');
+      expect(invoker.emitTo).toBeCalledWith(`You're not holding anything.`);
+      expect(other1.emitTo).not.toBeCalled();
+    });
+
+    test('shows message if right hand item not holdable in left', () => {
+      const item1 = buildItem(zone, 'item1', { flags: [ItemFlag.WEARABLE], wearSpots: [BodyPosition.HELD_RIGHT] });
+      invoker.addItem(item1);
+      wearItem(invoker, item1);
+      expect(invoker.equipment.HELD_RIGHT).toEqual(item1);
+      expect(invoker.equipment.HELD_LEFT).toBeUndefined();
+      callCommand(invoker, 'swap');
+      expect(invoker.emitTo).toBeCalledWith(`${item1} can't be held in your left hand.`);
+      expect(other1.emitTo).not.toBeCalled();
+      expect(invoker.equipment.HELD_RIGHT).toEqual(item1);
+      expect(invoker.equipment.HELD_LEFT).toBeUndefined();
+    });
+
+    test('shows message if left hand item not holdable in right', () => {
+      const item1 = buildItem(zone, 'item1', { flags: [ItemFlag.WEARABLE], wearSpots: [BodyPosition.HELD_LEFT] });
+      invoker.addItem(item1);
+      wearItem(invoker, item1);
+      expect(invoker.equipment.HELD_LEFT).toEqual(item1);
+      expect(invoker.equipment.HELD_RIGHT).toBeUndefined();
+      callCommand(invoker, 'swap');
+      expect(invoker.emitTo).toBeCalledWith(`${item1} can't be held in your right hand.`);
+      expect(other1.emitTo).not.toBeCalled();
+      expect(invoker.equipment.HELD_LEFT).toEqual(item1);
+      expect(invoker.equipment.HELD_RIGHT).toBeUndefined();
+    });
+
+    test('swaps items being held', () => {
+      const item1 = buildItem(zone, 'item1', { flags: [ItemFlag.WEARABLE], wearSpots: [BodyPosition.HELD_RIGHT, BodyPosition.HELD_LEFT] });
+      const item2 = buildItem(zone, 'item2', { flags: [ItemFlag.WEARABLE], wearSpots: [BodyPosition.HELD_RIGHT, BodyPosition.HELD_LEFT] });
+      invoker.addItem(item1);
+      invoker.addItem(item2);
+      wearItem(invoker, item1);
+      wearItem(invoker, item2);
+      expect(invoker.equipment.HELD_RIGHT).toEqual(item1);
+      expect(invoker.equipment.HELD_LEFT).toEqual(item2);
+      callCommand(invoker, 'swap');
+      expect(invoker.emitTo).toBeCalledWith(`You swap what's in your hands.`);
+      expect(other1.emitTo).toBeCalledWith(`${invoker} swaps what's in their hands.`);
+      expect(invoker.equipment.HELD_RIGHT).toEqual(item2);
+      expect(invoker.equipment.HELD_LEFT).toEqual(item1);
+    });
+
+    test('swaps single held item', () => {
+      const item1 = buildItem(zone, 'item1', { flags: [ItemFlag.WEARABLE], wearSpots: [BodyPosition.HELD_RIGHT, BodyPosition.HELD_LEFT] });
+      invoker.addItem(item1);
+      wearItem(invoker, item1);
+      expect(invoker.equipment.HELD_RIGHT).toEqual(item1);
+      expect(invoker.equipment.HELD_LEFT).toBeUndefined();
+      callCommand(invoker, 'swap');
+      expect(invoker.equipment.HELD_RIGHT).toBeUndefined();
+      expect(invoker.equipment.HELD_LEFT).toEqual(item1);
+      callCommand(invoker, 'swap');
+      expect(invoker.equipment.HELD_RIGHT).toEqual(item1);
+      expect(invoker.equipment.HELD_LEFT).toBeUndefined();
     });
   });
 });
