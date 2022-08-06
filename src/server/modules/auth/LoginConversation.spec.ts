@@ -208,6 +208,7 @@ Assuming place of Newname...`);
         CHARISMA: { baseValue: 10, modifiers: {}, value: 10 },
       },
       inventory: [],
+      equipment: {},
       workingData: {},
     });
   };

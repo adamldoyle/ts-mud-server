@@ -7,6 +7,8 @@ import { Zone } from './zone';
 import { RaceType } from './race';
 import { ClassType } from './class';
 import { defaultAbilities } from './abilities';
+import { ItemFlag } from './item';
+import { BodyPosition } from './equipment';
 
 jest.mock('fs');
 
@@ -183,7 +185,14 @@ describe('core/entities/character', () => {
         };
         const char = new Character(definition, zone, origin);
         const output = char.lookAt(invoker);
-        expect(output).toEqual(`<c>Test char<n>\nChar look description\n\nInventory:\n  nothing`);
+        expect(output).toEqual(`<c>Test char<n>
+Char look description
+
+Equipment:
+  nothing
+
+Inventory:
+  nothing`);
       });
 
       test('shows inventory', () => {
@@ -207,7 +216,47 @@ describe('core/entities/character', () => {
         expect(char.items.length).toEqual(0);
         char.finalize();
         const output = char.lookAt(invoker);
-        expect(output).toEqual(`<c>Test char<n>\nChar look description\n\nInventory:\n  <y>Test item<n>`);
+        expect(output).toEqual(`<c>Test char<n>
+Char look description
+
+Equipment:
+  nothing
+
+Inventory:
+  <y>Test item<n>`);
+      });
+
+      test('shows equipment', () => {
+        Instance.gameServer?.catalog.registerItemDefinition(
+          {
+            key: 'testItem',
+            name: 'Test item',
+            roomDescription: 'Test item room description',
+            description: 'Test item look description',
+            flags: [ItemFlag.WEARABLE],
+            wearSpots: [BodyPosition.FEET],
+          },
+          zone
+        );
+        const definition: ICharacterDefinition = {
+          key: 'testChar',
+          name: 'Test char',
+          roomDescription: 'Char room description',
+          description: 'Char look description',
+          equipment: { FEET: { key: 'testItem@testZone' } },
+        };
+        const char = new Character(definition, zone, origin);
+        expect(char.items.length).toEqual(0);
+        char.finalize();
+        const output = char.lookAt(invoker);
+        expect(output).toEqual(`<c>Test char<n>
+Char look description
+
+Equipment:
+  feet: <y>Test item<n>
+
+Inventory:
+  nothing`);
       });
 
       test('shows character key if looker is admin', () => {
@@ -220,7 +269,14 @@ describe('core/entities/character', () => {
         const char = new Character(definition, zone, origin);
         invoker.admin = true;
         const output = char.lookAt(invoker);
-        expect(output).toEqual(`<c>Test char<n> [testChar]\nChar look description\n\nInventory:\n  nothing`);
+        expect(output).toEqual(`<c>Test char<n> [testChar]
+Char look description
+
+Equipment:
+  nothing
+
+Inventory:
+  nothing`);
       });
     });
 
@@ -520,7 +576,9 @@ describe('core/entities/character', () => {
       test('produces character definition based on live character', () => {
         const invoker = buildCharacter(zone, 'invoker', origin);
         const item = buildItem(zone, 'testItem');
+        const item2 = buildItem(zone, 'testItem2');
         invoker.addItem(item);
+        invoker.equipment.FEET = item2;
         invoker.workingData['testKey'] = 'testValue';
         const output = invoker.toJson();
         expect(output).toEqual({
@@ -537,6 +595,17 @@ describe('core/entities/character', () => {
               roomDescription: '<y>testItem name<n> is on the ground here.',
             },
           ],
+          equipment: {
+            FEET: {
+              key: 'testItem2',
+              name: 'testItem2 name',
+              modifications: {},
+              workingData: {},
+              keywords: [],
+              description: 'You see <y>testItem2 name<n>.',
+              roomDescription: '<y>testItem2 name<n> is on the ground here.',
+            },
+          },
           workingData: { testKey: 'testValue' },
         });
       });
@@ -763,6 +832,7 @@ describe('core/entities/character', () => {
               class: ClassType.NONE,
               abilities: defaultAbilities(),
               inventory: [],
+              equipment: {},
               workingData: {},
             },
             null,

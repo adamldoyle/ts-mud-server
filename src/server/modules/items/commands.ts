@@ -2,6 +2,7 @@ import { parseArguments } from '@core/commands/CommandHandler';
 import { Item, matchItems } from '@core/entities/item';
 import { Instance } from '@server/GameServerInstance';
 import { Character } from '@core/entities/character';
+import { BodyPosition, BodyPositionInfo, lookAtEquipment, removeItem, wearItem } from '@core/entities/equipment';
 
 export const registerCommands = () => {
   if (!Instance.gameServer) {
@@ -172,8 +173,91 @@ export const registerCommands = () => {
   commandHandler.registerCommand({
     name: 'inventory',
     aliases: ['i', 'inv'],
+    handler: (invoker, command) => {
+      const response = parseArguments(invoker, command.params, '| char.room');
+      if (!response) {
+        return invoker.emitTo(`Whose inventory do you want to see?`);
+      }
+
+      const target = (response[0] as Character) ?? invoker;
+      invoker.emitTo(`${target}${invoker.admin ? ` [${target.key}]` : ''}\n${target.lookAtInventory(invoker)}`);
+    },
+  });
+
+  commandHandler.registerCommand({
+    name: 'equipment',
+    aliases: ['eq'],
+    handler: (invoker, command) => {
+      const response = parseArguments(invoker, command.params, '| char.room');
+      if (!response) {
+        return invoker.emitTo(`Whose equipment do you want to see?`);
+      }
+
+      const target = (response[0] as Character) ?? invoker;
+      invoker.emitTo(`${target}${invoker.admin ? ` [${target.key}]` : ''}\n${lookAtEquipment(invoker, target)}`);
+    },
+  });
+
+  commandHandler.registerCommand({
+    name: 'wear',
+    requiresBalance: true,
+    handler: (invoker, command) => {
+      const response = parseArguments(invoker, [command.rest], 'item.inv');
+      if (response?.length !== 1) {
+        return invoker.emitTo(`You don't have that.`);
+      }
+
+      const item = response[0] as Item;
+      const wearResponse = wearItem(invoker, item);
+      if (!wearResponse[0]) {
+        return invoker.emitTo(wearResponse[1]);
+      }
+
+      const spotDisplay = BodyPositionInfo[wearResponse[1]].display;
+      invoker.emitTo(`You wear ${item} on your ${spotDisplay}.`);
+      invoker.room.emitTo(`${invoker} wears ${item} on their ${spotDisplay}.`, [invoker]);
+    },
+  });
+
+  commandHandler.registerCommand({
+    name: 'remove',
+    requiresBalance: true,
+    handler: (invoker, command) => {
+      const response = parseArguments(invoker, [command.rest], 'item.eq');
+      if (response?.length !== 1) {
+        return invoker.emitTo(`You're not wearing that.`);
+      }
+
+      const item = response[0] as Item;
+      const removeResponse = removeItem(invoker, item);
+      if (!removeResponse[0]) {
+        return invoker.emitTo(removeResponse[1]);
+      }
+
+      const spotDisplay = BodyPositionInfo[removeResponse[1]].display;
+      invoker.emitTo(`You remove ${item} from your ${spotDisplay}.`);
+      invoker.room.emitTo(`${invoker} removes ${item} from their ${spotDisplay}.`, [invoker]);
+    },
+  });
+
+  commandHandler.registerCommand({
+    name: 'swap',
+    requiresBalance: true,
     handler: (invoker) => {
-      invoker.emitTo(invoker.lookAtInventory(invoker));
+      if (!invoker.equipment.HELD_RIGHT && !invoker.equipment.HELD_LEFT) {
+        return invoker.emitTo(`You're not holding anything.`);
+      }
+      if (invoker.equipment.HELD_RIGHT && !invoker.equipment.HELD_RIGHT.definition.wearSpots?.includes(BodyPosition.HELD_LEFT)) {
+        return invoker.emitTo(`${invoker.equipment.HELD_RIGHT} can't be held in your left hand.`);
+      }
+      if (invoker.equipment.HELD_LEFT && !invoker.equipment.HELD_LEFT.definition.wearSpots?.includes(BodyPosition.HELD_RIGHT)) {
+        return invoker.emitTo(`${invoker.equipment.HELD_LEFT} can't be held in your right hand.`);
+      }
+      const rightItem = invoker.equipment.HELD_RIGHT;
+      invoker.equipment.HELD_RIGHT = invoker.equipment.HELD_LEFT;
+      invoker.equipment.HELD_LEFT = rightItem;
+      invoker.emitTo(`You swap what's in your hands.`);
+      invoker.room.emitTo(`${invoker} swaps what's in their hands.`, [invoker]);
     },
   });
 };

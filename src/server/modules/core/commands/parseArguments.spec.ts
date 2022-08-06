@@ -161,15 +161,30 @@ describe('core/commands/parseArguments', () => {
       expect(response?.[0]).toEqual(item2);
     });
 
-    test('looks at inventory and room combined by default', () => {
+    test("allows looking at invoker's equipment", () => {
       const item1 = buildItem(zone, 'testItem1', {});
       const item2 = buildItem(zone, 'testItem2', {});
       invoker.addItem(item1);
+      invoker.equipment.HELD_LEFT = item2;
+      let response = parseArguments(invoker, ['testItem1'], 'item.eq');
+      expect(response).toBeUndefined();
+      response = parseArguments(invoker, ['testItem2'], 'item.eq');
+      expect(response?.[0]).toEqual(item2);
+    });
+
+    test('looks at inventory, equipment, and room combined by default', () => {
+      const item1 = buildItem(zone, 'testItem1', {});
+      const item2 = buildItem(zone, 'testItem2', {});
+      const item3 = buildItem(zone, 'testItem3', {});
+      invoker.addItem(item1);
       invokerRoom.addItem(item2);
+      invoker.equipment.HELD_LEFT = item3;
       let response = parseArguments(invoker, ['testItem1'], 'item');
       expect(response?.[0]).toEqual(item1);
       response = parseArguments(invoker, ['testItem2'], 'item');
       expect(response?.[0]).toEqual(item2);
+      response = parseArguments(invoker, ['testItem3'], 'item');
+      expect(response?.[0]).toEqual(item3);
     });
 
     test('allows matching on item key with case insensitive matching', () => {

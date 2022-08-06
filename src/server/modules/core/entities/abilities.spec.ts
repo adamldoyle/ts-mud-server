@@ -31,5 +31,18 @@ describe('abilities', () => {
         WISDOM: { baseValue: 14, modifiers: { other: 2 }, value: 16 },
       });
     });
+
+    test('supports raw ability format', () => {
+      expect(
+        abilities.buildAbilities({
+          DEXTERITY: 10,
+          WISDOM: 14,
+        })
+      ).toEqual({
+        ...abilities.defaultAbilities(),
+        DEXTERITY: { baseValue: 10, modifiers: {}, value: 10 },
+        WISDOM: { baseValue: 14, modifiers: {}, value: 14 },
+      });
+    });
   });
 });
