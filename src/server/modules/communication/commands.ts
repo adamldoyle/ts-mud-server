@@ -1,5 +1,6 @@
 import { parseArguments } from '@core/commands/CommandHandler';
 import { Instance } from '@server/GameServerInstance';
+import { Character } from '@core/entities/character';
 
 export const registerCommands = () => {
   if (!Instance.gameServer) {
@@ -44,8 +45,8 @@ export const registerCommands = () => {
       if (!response) {
         return invoker.emitTo(`Whisper to whom what?`);
       }
-      const target = response[0];
-      const message = response[1];
+      const target = response[0] as Character;
+      const message = response[1] as string;
 
       invoker.emitTo(`You whisper to ${target}, "${message}"`);
       target.emitTo(`${invoker} whispers to you, "${message}"`);

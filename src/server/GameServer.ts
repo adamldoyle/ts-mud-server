@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { Server, Socket } from 'socket.io';
 import { logger } from '@shared/Logger';
 import { ISettings } from '@shared/types';

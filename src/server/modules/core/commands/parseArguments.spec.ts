@@ -24,116 +24,120 @@ describe('core/commands/parseArguments', () => {
   });
 
   describe('character matching', () => {
+    const testParseArguments = (invoker: Character, params: string[], syntax: string): [Character] | undefined => {
+      return parseArguments(invoker, params, syntax) as [Character] | undefined;
+    };
+
     test('allows looking at character in room', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
       buildCharacter(zone, 'otherUser2', otherRoom);
-      let response = parseArguments(invoker, ['otherUser1'], 'char.room');
+      let response = testParseArguments(invoker, ['otherUser1'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
-      response = parseArguments(invoker, ['otherUser2'], 'char.room');
+      response = testParseArguments(invoker, ['otherUser2'], 'char.room');
       expect(response).toBeUndefined();
     });
 
     test('allows restricting looking at self', () => {
-      let response = parseArguments(invoker, ['invoker'], 'char.room.noself');
+      let response = testParseArguments(invoker, ['invoker'], 'char.room.noself');
       expect(response).toBeUndefined();
-      response = parseArguments(invoker, ['invoker'], 'char.room');
+      response = testParseArguments(invoker, ['invoker'], 'char.room');
       expect(response?.[0].key).toEqual('invoker');
     });
 
     test('allows matching on character key with case insensitive matching', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
-      let response = parseArguments(invoker, ['otherUser1'], 'char.room');
+      let response = testParseArguments(invoker, ['otherUser1'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
-      response = parseArguments(invoker, ['OTHERUSER1'], 'char.room');
+      response = testParseArguments(invoker, ['OTHERUSER1'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
     });
 
     test('allows matching on character key partial with case insensitive matching', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
-      let response = parseArguments(invoker, ['otherUse'], 'char.room');
+      let response = testParseArguments(invoker, ['otherUse'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
-      response = parseArguments(invoker, ['OTHERUSE'], 'char.room');
+      response = testParseArguments(invoker, ['OTHERUSE'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
     });
 
     test('allows matching on character keywords with case insensitive matching', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom, { keywords: ['other-keyword'] });
-      let response = parseArguments(invoker, ['other-keyword'], 'char.room');
+      let response = testParseArguments(invoker, ['other-keyword'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
-      response = parseArguments(invoker, ['OTHER-KEYWORD'], 'char.room');
+      response = testParseArguments(invoker, ['OTHER-KEYWORD'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
     });
 
     test('allows matching on character name with case insensitive matching', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom, { name: 'nameOfCharacter' });
-      let response = parseArguments(invoker, ['nameOfChar'], 'char.room');
+      let response = testParseArguments(invoker, ['nameOfChar'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
-      response = parseArguments(invoker, ['NAMEOFCHAR'], 'char.room');
+      response = testParseArguments(invoker, ['NAMEOFCHAR'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
     });
 
     test('matching prefers full key to keywords', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom, { keywords: ['otherUser2'] });
       buildCharacter(zone, 'otherUser2', invokerRoom);
-      let response = parseArguments(invoker, ['otherUser2'], 'char.room');
+      let response = testParseArguments(invoker, ['otherUser2'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser2');
     });
 
     test('matching prefers keywords to partial key', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
       buildCharacter(zone, 'otherUser2', invokerRoom, { keywords: ['otherUser'] });
-      let response = parseArguments(invoker, ['otherUser'], 'char.room');
+      let response = testParseArguments(invoker, ['otherUser'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser2');
     });
 
     test('matching prefers partial key to partial name', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom, { name: 'userKey' });
       buildCharacter(zone, 'userKey2', invokerRoom);
-      let response = parseArguments(invoker, ['userKey'], 'char.room');
+      let response = testParseArguments(invoker, ['userKey'], 'char.room');
       expect(response?.[0].key).toEqual('userKey2');
     });
 
     test('supports returning 1-indexed result', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom, { keywords: ['user'] });
       buildCharacter(zone, 'otherUser2', invokerRoom, { keywords: ['user'] });
-      let response = parseArguments(invoker, ['user.1'], 'char.room');
+      let response = testParseArguments(invoker, ['user.1'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser1');
-      response = parseArguments(invoker, ['user.2'], 'char.room');
+      response = testParseArguments(invoker, ['user.2'], 'char.room');
       expect(response?.[0].key).toEqual('otherUser2');
-      response = parseArguments(invoker, ['user.3'], 'char.room');
+      response = testParseArguments(invoker, ['user.3'], 'char.room');
       expect(response).toBeUndefined();
     });
 
     test('restricts to room by default', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
       buildCharacter(zone, 'otherUser2', otherRoom);
-      let response = parseArguments(invoker, ['otherUser1'], 'char');
+      let response = testParseArguments(invoker, ['otherUser1'], 'char');
       expect(response?.[0].key).toEqual('otherUser1');
-      response = parseArguments(invoker, ['otherUser2'], 'char');
+      response = testParseArguments(invoker, ['otherUser2'], 'char');
       expect(response).toBeUndefined();
     });
 
     test('allows searching whole zone', () => {
       buildCharacter(zone, 'otherUser2', otherRoom);
-      const response = parseArguments(invoker, ['otherUser2'], 'char.zone');
+      const response = testParseArguments(invoker, ['otherUser2'], 'char.zone');
       expect(response?.[0].key).toEqual('otherUser2');
     });
 
     test('allows restricting to npcs', () => {
       buildCharacter(zone, 'npcChar', invokerRoom);
       buildCharacter(zone, 'playerChar', invokerRoom, { accountId: 'playerAccount' } as IPlayerDefinition);
-      let response = parseArguments(invoker, ['npcChar'], 'char.npc');
+      let response = testParseArguments(invoker, ['npcChar'], 'char.npc');
       expect(response?.[0].key).toEqual('npcChar');
-      response = parseArguments(invoker, ['playerChar'], 'char.npc');
+      response = testParseArguments(invoker, ['playerChar'], 'char.npc');
       expect(response).toBeUndefined();
     });
 
     test('allows restricting to players', () => {
       buildCharacter(zone, 'npcChar', invokerRoom);
       buildCharacter(zone, 'playerChar', invokerRoom, { accountId: 'playerAccount' } as IPlayerDefinition);
-      let response = parseArguments(invoker, ['npcChar'], 'char.player');
+      let response = testParseArguments(invoker, ['npcChar'], 'char.player');
       expect(response).toBeUndefined();
-      response = parseArguments(invoker, ['playerChar'], 'char.player');
+      response = testParseArguments(invoker, ['playerChar'], 'char.player');
       expect(response?.[0].key).toEqual('playerChar');
     });
   });
@@ -366,28 +370,32 @@ describe('core/commands/parseArguments', () => {
   });
 
   describe('general matching', () => {
+    const testParseArguments = (invoker: Character, params: string[], syntax: string): Character[] | undefined => {
+      return parseArguments(invoker, params, syntax) as Character[] | undefined;
+    };
+
     test('matches optional strings', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
-      let response = parseArguments(invoker, ['at', 'otherUser1'], '[at] char.room');
+      let response = testParseArguments(invoker, ['at', 'otherUser1'], '[at] char.room');
       expect(response?.[0].key).toEqual('otherUser1');
     });
 
     test('can skip optional strings', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
-      let response = parseArguments(invoker, ['otherUser1'], '[at] char.room');
+      let response = testParseArguments(invoker, ['otherUser1'], '[at] char.room');
       expect(response?.[0].key).toEqual('otherUser1');
     });
 
     test('fails if optional string is a mismatch', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
-      let response = parseArguments(invoker, ['to', 'otherUser1'], '[at] char.room');
+      let response = testParseArguments(invoker, ['to', 'otherUser1'], '[at] char.room');
       expect(response).toBeUndefined();
     });
 
     test('supports declaring remainder optional', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
       buildCharacter(zone, 'otherUser2', invokerRoom);
-      let response = parseArguments(invoker, ['otherUser1'], 'char.room | char.room');
+      let response = testParseArguments(invoker, ['otherUser1'], 'char.room | char.room');
       expect(response?.length).toEqual(1);
       expect(response?.[0].key).toEqual('otherUser1');
     });
@@ -395,7 +403,7 @@ describe('core/commands/parseArguments', () => {
     test('supports declaring remainder optional', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
       buildCharacter(zone, 'otherUser2', invokerRoom);
-      let response = parseArguments(invoker, ['otherUser1', 'otherUser2'], 'char.room | char.room');
+      let response = testParseArguments(invoker, ['otherUser1', 'otherUser2'], 'char.room | char.room');
       expect(response?.length).toEqual(2);
       expect(response?.[0].key).toEqual('otherUser1');
       expect(response?.[1].key).toEqual('otherUser2');
@@ -404,7 +412,7 @@ describe('core/commands/parseArguments', () => {
     test('matches multiple parts', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
       buildCharacter(zone, 'otherUser2', invokerRoom);
-      const response = parseArguments(invoker, ['at', 'otherUser1', 'and', 'otherUser2'], '[at] char.room [and] char.room');
+      const response = testParseArguments(invoker, ['at', 'otherUser1', 'and', 'otherUser2'], '[at] char.room [and] char.room');
       expect(response?.[0].key).toEqual('otherUser1');
       expect(response?.[1].key).toEqual('otherUser2');
     });
@@ -412,7 +420,7 @@ describe('core/commands/parseArguments', () => {
     test('matches multiple parts with optionals missing', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
       buildCharacter(zone, 'otherUser2', invokerRoom);
-      const response = parseArguments(invoker, ['otherUser1', 'otherUser2'], '[at] char.room [and] char.room');
+      const response = testParseArguments(invoker, ['otherUser1', 'otherUser2'], '[at] char.room [and] char.room');
       expect(response?.[0].key).toEqual('otherUser1');
       expect(response?.[1].key).toEqual('otherUser2');
     });

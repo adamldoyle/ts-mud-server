@@ -9,6 +9,7 @@ export const loadSettings = () => {
     throw new Error('Invalid --settings argument (no filename after --settings)');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const settings = require(settingsFile);
   if (!settings) {
     throw new Error('Invalid --settings argument (file not found)');

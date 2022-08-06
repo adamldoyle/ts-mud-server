@@ -40,6 +40,7 @@ export function ItemContainer<TBase extends Constructor>(Base: TBase) {
       this.items = this.items.filter((other) => other !== item);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     lookAtInventory(looker: Character) {
       const buffer = this.items
         .reduce<[Item, number][]>((acc, item) => {
@@ -75,7 +76,7 @@ export interface IItemDefinition {
   description?: string;
   keywords?: string[];
   modifications?: Record<string, string>;
-  workingData?: Record<string, any>;
+  workingData?: Record<string, unknown>;
   inventory?: IItemResetsDefinition[];
   flags?: ItemFlag[] | flagUtils.FlagsType;
   wearSpots?: BodyPosition[];
@@ -99,7 +100,7 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
   keywords: string[];
   container?: IItemContainer;
   modifications: Record<string, string>;
-  workingData: Record<string, any>;
+  workingData: Record<string, unknown>;
   flags: flagUtils.Flags<ItemFlag>;
 
   constructor(definition: IItemDefinition, zone: Zone) {
@@ -141,6 +142,7 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
     return `${title}${looker.admin ? ` [${this.key}]` : ''}\n${this.description}${inventory ? `\n\n${inventory}` : ''}`;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   roomLookAt(looker: Character) {
     return this.roomDescription;
   }

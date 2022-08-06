@@ -1,4 +1,3 @@
-import deepEqual from 'deep-equal';
 import { flagUtils } from '@core/utils';
 import { calculateTime, TimeOfDay } from '@modules/calendar';
 import { buildCommandHandler, ICommandDefinition, ICommandHandler } from '@core/commands/CommandHandler';
@@ -66,6 +65,7 @@ export class Exit {
     this.destination = destination;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   canView(char: Character): boolean {
     return !this.flags.hasFlag(ExitFlag.SECRET);
   }
@@ -263,7 +263,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
       .filter((exit) => exit.canView(looker))
       .map((exit) => exit.lookAt(looker))
       .join('\n');
-    let charBuffer = this.characters
+    const charBuffer = this.characters
       .filter((character) => character !== looker)
       .reduce<[Character, number][]>((acc, character) => {
         const existing = acc.find(([other]) => other.key === character.key);
@@ -277,7 +277,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
       .map(([character, qty]) => `${qty > 1 ? `(x${qty}) ` : ''}${character.roomLookAt(looker)}`)
       .filter((description) => description)
       .join(' ');
-    let itemBuffer = this.items
+    const itemBuffer = this.items
       .reduce<[Item, number][]>((acc, item) => {
         const existing = acc.find(([other]) => item.isSameItem(other));
         if (existing) {
@@ -380,7 +380,10 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
     }
   }
 
-  newTimeOfDay(timeOfDay: TimeOfDay) {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  newTimeOfDay(timeOfDay: TimeOfDay) {
+    // No-op
+  }
 
   toJson(): ISavedRoomDefinition {
     const exits: IExitDefinition[] = Object.values(this.exits).map((exit) => ({

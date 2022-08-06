@@ -78,7 +78,7 @@ export const removeItem = (invoker: Character, item: Item): [true, BodyPosition]
     return [false, `You're not wearing that.`];
   }
 
-  const equipmentEntry = Object.entries(invoker.equipment).find(([_, wornItem]) => wornItem === item);
+  const equipmentEntry = Object.entries(invoker.equipment).find(([, wornItem]) => wornItem === item);
   if (!equipmentEntry || !equipmentEntry[0] || !equipmentEntry[1]) {
     return [false, `You're not wearing that.`];
   }
@@ -109,7 +109,7 @@ export const buildEquipment = (invoker: Character, definitions?: Partial<Record<
 };
 
 export const lookAtEquipment = (looker: Character, target: Character, excludeEmpty?: boolean) => {
-  const entries = Object.entries(target.equipment).filter(([_, item]) => !excludeEmpty || item);
+  const entries = Object.entries(target.equipment).filter(([, item]) => !excludeEmpty || item);
   const longestSpot = entries.reduce((acc, [wearSpot]) => {
     return Math.max(acc, BodyPositionInfo[wearSpot as BodyPosition].display.length);
   }, 0);

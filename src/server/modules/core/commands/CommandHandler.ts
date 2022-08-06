@@ -1,14 +1,15 @@
 import { logger } from '@shared/Logger';
 import { Character } from '@core/entities/character';
 import { parseArguments } from './parseArguments';
+import { Room } from '@core/entities/room';
 
 export interface ICommandDefinition {
   name: string;
   aliases?: string[];
   admin?: boolean;
   requiresBalance?: boolean;
-  handler: (invoker: Character, command: ICommand, origin: any, definition: ICommandDefinition) => boolean | undefined | void;
-  data?: Record<string, any>;
+  handler: (invoker: Character, command: ICommand, origin: Character | Room | undefined, definition: ICommandDefinition) => boolean | undefined | void;
+  data?: Record<string, unknown>;
 }
 
 export interface ICommand {
@@ -21,7 +22,7 @@ export interface ICommand {
 export interface ICommandHandler {
   getCommandDefinitions: () => ICommandDefinition[];
   registerCommand: (definition: ICommandDefinition) => void;
-  handleCommand: (invoker: Character, rawInput: string, origin: any) => boolean;
+  handleCommand: (invoker: Character, rawInput: string, origin: Character | Room | undefined) => boolean;
 }
 
 export const parseInput = (rawInput: string): ICommand => {
@@ -54,10 +55,10 @@ export const buildCommandHandler = (): ICommandHandler => {
   const getCommandDefinitions = () => {
     return Object.entries(commandDefinitions)
       .filter(([commandKey, definition]) => commandKey === definition.name)
-      .map(([_, commandDefinition]) => commandDefinition);
+      .map(([, commandDefinition]) => commandDefinition);
   };
 
-  const handleCommand = (invoker: Character, rawInput: string, origin: any): boolean => {
+  const handleCommand = (invoker: Character, rawInput: string, origin: Character | Room | undefined): boolean => {
     const command = parseInput(rawInput);
     const commandDefinition = commandDefinitions[command.command];
     if (!commandDefinition || (commandDefinition.admin && !invoker.admin)) {
@@ -69,7 +70,7 @@ export const buildCommandHandler = (): ICommandHandler => {
       return true;
     }
 
-    const response = commandDefinition.handler(invoker, command, commandDefinition, origin);
+    const response = commandDefinition.handler(invoker, command, origin, commandDefinition);
     // False returned if message should be treated as unhandled
     if (response === false) {
       return false;
@@ -78,11 +79,10 @@ export const buildCommandHandler = (): ICommandHandler => {
   };
 
   return {
-    commandDefinitions,
     getCommandDefinitions,
     registerCommand,
     handleCommand,
-  } as any;
+  };
 };
 
 export { parseArguments };

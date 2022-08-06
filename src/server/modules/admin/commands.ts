@@ -258,8 +258,8 @@ export const registerCommands = () => {
               acc[parts[0]] = parts[1];
               return acc;
             }, {});
-        } catch (err: any) {
-          return invoker.emitTo(err?.message ?? 'Error parsing item modifications.');
+        } catch (err: unknown) {
+          return invoker.emitTo(err instanceof Error ? err.message : 'Error parsing item modifications.');
         }
       }
 

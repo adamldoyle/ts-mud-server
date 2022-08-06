@@ -13,9 +13,9 @@ export class Conversation {
   scheduledCommand?: ReturnType<typeof setTimeout>;
   subConversation?: Conversation;
   parentConversation?: Conversation;
-  endConversationCallback?: (data?: any) => void;
+  endConversationCallback?: (data?: unknown) => void;
 
-  constructor(characters: Character[], endConversationCallback?: (data?: any) => void) {
+  constructor(characters: Character[], endConversationCallback?: (data?: unknown) => void) {
     this.id = v4();
     this.characters = characters;
     characters.forEach((character) => {
@@ -40,6 +40,7 @@ export class Conversation {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleCommand(invoker: Character, rawInput: string): boolean {
     // Override this in your conversations
     return false;
@@ -58,9 +59,12 @@ export class Conversation {
     subConversation.parentConversation = this;
   }
 
-  returnToConversation(data?: any) {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  returnToConversation(data?: unknown) {
+    // No-op
+  }
 
-  endConversation(data?: any) {
+  endConversation(data?: unknown) {
     this.characters.forEach((character) => {
       character.conversation = this.parentConversation ?? undefined;
     });
