@@ -352,11 +352,15 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
         : this.zone.characters.filter((character) => character.key === key);
       const shouldExist = !resetDefinition.times || resetDefinition.times.includes(timeOfDay);
       if (shouldExist && matches.length === 0) {
-        const character = getCatalogSafely().loadCharacter(key, this.zone, this);
-        if (character) {
-          character.finalize();
-          if (resetDefinition.creationMessage) {
-            character.room.emitTo(resetDefinition.creationMessage);
+        const characterDefinition = getCatalogSafely().lookupCharacterDefinition(resetDefinition.key, this.zone);
+        if (characterDefinition) {
+          const mergedDefinition: ICharacterDefinition = { ...characterDefinition, ...resetDefinition, commands: characterDefinition?.commands };
+          const character = new Character(mergedDefinition, this.zone, this);
+          if (character) {
+            character.finalize();
+            if (resetDefinition.creationMessage) {
+              character.room.emitTo(resetDefinition.creationMessage);
+            }
           }
         }
       } else if (!shouldExist && matches.length > 0) {

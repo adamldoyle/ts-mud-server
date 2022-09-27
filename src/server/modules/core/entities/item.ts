@@ -69,8 +69,25 @@ export enum ItemFlag {
   WEARABLE = 1 << 2,
 }
 
+export enum ItemType {
+  NONE = 'NONE',
+  WEAPON = 'WEAPON',
+}
+
+export interface IItemTypeNone {
+  type: ItemType.NONE;
+}
+
+export interface IItemTypeWeapon {
+  type: ItemType.WEAPON;
+  damage: string;
+}
+
+export type IItemType = IItemTypeNone | IItemTypeWeapon;
+
 export interface IItemDefinition {
   key: string;
+  type?: IItemType;
   name: string;
   roomDescription?: string;
   description?: string;
@@ -93,6 +110,7 @@ export const applyModifications = (text: string, modifications?: Record<string, 
 export class Item extends ItemContainer(BaseKeyedEntity) {
   definition: IItemDefinition;
   id: string;
+  type: IItemType;
   name: string;
   styledName: string;
   roomDescription: string;
@@ -108,6 +126,7 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
     this.initializeKeyedEntity(definition.key, zone);
     this.id = v4();
     this.definition = definition;
+    this.type = definition.type ?? { type: ItemType.NONE };
     this.modifications = definition.modifications ?? {};
     this.name = definition.name;
     this.styledName = `<y>${this.name}<n>`;
