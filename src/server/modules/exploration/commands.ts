@@ -2,14 +2,12 @@ import { Character } from '@core/entities/character';
 import { DIRECTION_ALIASES, DIRECTION_OPPOSITES, Exit } from '@core/entities/room';
 import { parseArguments } from '@core/commands/CommandHandler';
 import { Item } from '@core/entities/item';
-import { Instance } from '@server/GameServerInstance';
+import { getGameServerSafely } from '@server/GameServerInstance';
 
 export const registerCommands = () => {
-  if (!Instance.gameServer) {
-    return;
-  }
+  const gameServer = getGameServerSafely();
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: 'look',
     aliases: ['l'],
     handler(invoker, command) {
@@ -81,7 +79,7 @@ export const registerCommands = () => {
   };
 
   const registerMoveCommand = (direction: string, alias?: string) => {
-    Instance.gameServer?.commandHandler.registerCommand({
+    gameServer.commandHandler.registerCommand({
       name: direction,
       aliases: alias ? [alias] : undefined,
       requiresBalance: true,
@@ -95,7 +93,7 @@ export const registerCommands = () => {
     registerMoveCommand(entry[1], entry[0]);
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: 'follow',
     requiresBalance: true,
     handler: (invoker, command) => {
@@ -110,7 +108,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: 'unfollow',
     requiresBalance: true,
     handler: (invoker) => {
@@ -118,7 +116,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: 'disband',
     requiresBalance: true,
     handler: (invoker) => {
@@ -126,7 +124,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: 'open',
     requiresBalance: true,
     handler: (invoker, command) => {
@@ -160,7 +158,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: 'close',
     requiresBalance: true,
     handler: (invoker, command) => {

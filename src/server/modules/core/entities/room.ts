@@ -38,6 +38,7 @@ export enum ExitFlag {
   DOOR = 1 << 1,
   CLOSED = 1 << 2,
   SECRET = 1 << 3,
+  IMPASSABLE = 1 << 4,
 }
 
 export interface IExitDefinition {
@@ -124,6 +125,9 @@ export class Exit {
   }
 
   canPass(char: Character) {
+    if (this.flags.hasFlag(ExitFlag.IMPASSABLE)) {
+      return false;
+    }
     if (this.isClosed()) {
       return false;
     }
@@ -147,6 +151,8 @@ export class Exit {
     let direction = this.direction;
     if (this.isClosed()) {
       direction = `[${direction}]`;
+    } else if (!this.canPass(looker)) {
+      direction = `(${direction})`;
     }
     return `  - <y>${direction.padStart(12)}<n> :: ${this.destination.name}${looker.admin ? ` [${this.destination.key}]` : ''}`;
   }
@@ -260,6 +266,7 @@ export class Room extends ItemContainer(BaseKeyedEntity) {
 
   lookAt(looker: Character) {
     let exitBuffer = Object.values(this.exits)
+      .sort((a, b) => a.direction.localeCompare(b.direction))
       .filter((exit) => exit.canView(looker))
       .map((exit) => exit.lookAt(looker))
       .join('\n');

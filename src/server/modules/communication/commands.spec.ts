@@ -1,4 +1,4 @@
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getGameServerSafely } from '@server/GameServerInstance';
 import { buildCharacter, buildPlayer, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { Character } from '@core/entities/character';
 import { registerCommands } from './commands';
@@ -22,13 +22,10 @@ describe('communication/commands', () => {
 
   describe('chat', () => {
     test('sends message to all players', () => {
-      if (!Instance.gameServer) {
-        throw new Error('Invalid test setup');
-      }
       const otherZone = buildZone({ key: 'otherZone' }, true);
       const otherRoom = buildRoom(otherZone, 'testRoom');
       const player = buildPlayer('player', otherRoom);
-      Instance.gameServer.playersByName = {
+      getGameServerSafely().playersByName = {
         player,
       };
       callCommand(invoker, 'chat test message');
@@ -40,9 +37,6 @@ describe('communication/commands', () => {
 
   describe('shout', () => {
     test('sends message to all characters in zone', () => {
-      if (!Instance.gameServer) {
-        throw new Error('Invalid test setup');
-      }
       const otherZone = buildZone({ key: 'otherZone' }, true);
       const otherZoneRoom = buildRoom(otherZone, 'testRoom');
       const otherZoneChar = buildCharacter(otherZone, 'player', otherZoneRoom);
@@ -59,9 +53,6 @@ describe('communication/commands', () => {
 
   describe('say', () => {
     test('sends message to all characters in room', () => {
-      if (!Instance.gameServer) {
-        throw new Error('Invalid test setup');
-      }
       const otherRoom = buildRoom(invoker.zone, 'otherRoom');
       const otherRoomChar = buildCharacter(invoker.zone, 'otherChar', otherRoom);
 
@@ -74,9 +65,6 @@ describe('communication/commands', () => {
 
   describe('whisper', () => {
     test('sends message to specific character in room', () => {
-      if (!Instance.gameServer) {
-        throw new Error('Invalid test setup');
-      }
       const otherChar = buildCharacter(invoker.zone, 'otherChar', invoker.room);
 
       callCommand(invoker, `whisper ${other.basicKey} test message`);
@@ -86,9 +74,6 @@ describe('communication/commands', () => {
     });
 
     test(`can't whisper to someone outside room`, () => {
-      if (!Instance.gameServer) {
-        throw new Error('Invalid test setup');
-      }
       const otherRoom = buildRoom(invoker.zone, 'otherRoom');
       const otherChar = buildCharacter(invoker.zone, 'otherChar', otherRoom);
 
@@ -100,14 +85,11 @@ describe('communication/commands', () => {
 
   describe('tell', () => {
     test('sends message to specific player anywhere', () => {
-      if (!Instance.gameServer) {
-        throw new Error('Invalid test setup');
-      }
       const otherZone = buildZone({ key: 'otherZone' }, true);
       const otherRoom = buildRoom(otherZone, 'testRoom');
       const player = buildPlayer('player', otherRoom);
       const otherPlayer = buildPlayer('otherPlayer', invoker.room);
-      Instance.gameServer.playersByName = {
+      getGameServerSafely().playersByName = {
         player,
         otherPlayer,
       };
