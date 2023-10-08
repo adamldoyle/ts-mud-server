@@ -1,4 +1,4 @@
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getGameServerSafely } from '@server/GameServerInstance';
 import { Character, Player } from '@core/entities/character';
 import { buildCharacter, buildPlayer, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { registerCommands } from './commands';
@@ -94,10 +94,7 @@ describe('core/commands/commands', () => {
 
   describe('who', () => {
     test('outputs admins and players logged in', () => {
-      if (!Instance.gameServer) {
-        throw new Error('Invalid test state');
-      }
-      Instance.gameServer.playersByName = {
+      getGameServerSafely().playersByName = {
         admin1: { admin: true, key: 'admin1', toString: () => 'Admin1' } as any,
         admin2: { admin: true, key: 'admin2', toString: () => 'Admin2' } as any,
         player1: { key: 'player1', toString: () => 'Player1' } as any,

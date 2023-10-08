@@ -1,15 +1,12 @@
 import { Player } from '@core/entities/character';
-import { Instance } from '@server/GameServerInstance';
+import { getGameServerSafely } from '@server/GameServerInstance';
 import { logger } from '@shared/Logger';
 import { calculateTime } from '@server/modules/calendar';
 import { diceUtils } from '../utils';
 
 export const registerCommands = () => {
-  if (!Instance.gameServer) {
-    return;
-  }
-
-  const commandHandler = Instance.gameServer.commandHandler;
+  const gameServer = getGameServerSafely();
+  const commandHandler = gameServer.commandHandler;
 
   commandHandler.registerCommand({
     name: 'quit',
@@ -17,7 +14,7 @@ export const registerCommands = () => {
     handler: (invoker) => {
       const player = invoker as Player;
       if (player.accountId) {
-        Instance.gameServer?.logoutUser(player.accountId);
+        gameServer.logoutUser(player.accountId);
       } else {
         logger.error(`Quit command sent for non-player character`, { character: invoker.name });
       }
@@ -70,7 +67,7 @@ export const registerCommands = () => {
   commandHandler.registerCommand({
     name: 'who',
     handler: (invoker) => {
-      const { admins, players } = Object.values(Instance.gameServer?.playersByName ?? {}).reduce<{ admins: Player[]; players: Player[] }>(
+      const { admins, players } = Object.values(gameServer.playersByName ?? {}).reduce<{ admins: Player[]; players: Player[] }>(
         (acc, player) => {
           if (player.admin) {
             acc.admins.push(player);

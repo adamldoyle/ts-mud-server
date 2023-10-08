@@ -35,8 +35,10 @@ export const colorMessage = (input: string): string => {
     }
   }
   output += input.substring(lastIndex ?? 0);
-  output = output.replace(/</g, '&lt;');
-  output = output.replace(/>/g, '&gt;');
+  output = output.replace(/</g, 'temporaryampersandlt;');
+  output = output.replace(/>/g, 'temporaryampersandgt;');
+  output = output.replace(/&/g, '&amp;');
+  output = output.replace(/temporaryampersand/g, '&');
   return output;
 };
 

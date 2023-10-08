@@ -1,16 +1,15 @@
 import { parseArguments } from '@core/commands/CommandHandler';
-import { Instance } from '@server/GameServerInstance';
+import { getGameServerSafely } from '@server/GameServerInstance';
 import { Character } from '@core/entities/character';
 
 export const registerCommands = () => {
-  if (!Instance.gameServer) {
-    return;
-  }
-  Instance.gameServer.commandHandler.registerCommand({
+  const gameServer = getGameServerSafely();
+
+  gameServer.commandHandler.registerCommand({
     name: 'chat',
     handler: (invoker, command) => {
       invoker.emitTo(`You chat, "${command.rest}"`);
-      Object.values(Instance.gameServer?.playersByName ?? []).forEach((other) => {
+      Object.values(gameServer.playersByName ?? []).forEach((other) => {
         if (other !== invoker) {
           other.emitTo(`${invoker} chats, "${command.rest}"`);
         }
@@ -18,7 +17,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: 'shout',
     handler: (invoker, command) => {
       invoker.emitTo(`You shout, "${command.rest}"`);
@@ -30,7 +29,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: 'say',
     handler: (invoker, command) => {
       invoker.emitTo(`You say, "${command.rest}"`);
@@ -38,7 +37,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: 'whisper',
     handler: (invoker, command) => {
       const response = parseArguments(invoker, command.params, 'char.room.noself string');
@@ -53,7 +52,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: 'tell',
     handler: (invoker, command) => {
       if (command.params.length < 2) {
@@ -61,7 +60,7 @@ export const registerCommands = () => {
       }
 
       const [targetName, ...messageParts] = command.params;
-      const target = Instance.gameServer?.playersByName[targetName.toLowerCase()];
+      const target = gameServer.playersByName[targetName.toLowerCase()];
       if (!target) {
         return invoker.emitTo(`They're not around.`);
       }

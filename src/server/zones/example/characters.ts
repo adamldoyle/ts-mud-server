@@ -1,13 +1,10 @@
 import { Zone } from '@core/entities/zone';
-import { Instance } from '@server/GameServerInstance';
+import { getGameServerSafely } from '@server/GameServerInstance';
 import { CharacterFlag } from '@core/entities/character';
 
 export const registerCharacters = (zone: Zone) => {
-  if (!Instance.gameServer) {
-    return;
-  }
-
-  const catalog = Instance.gameServer.catalog;
+  const gameServer = getGameServerSafely();
+  const catalog = gameServer.catalog;
 
   catalog.registerCharacterDefinition(
     {

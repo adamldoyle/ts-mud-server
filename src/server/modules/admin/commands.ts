@@ -1,14 +1,12 @@
 import { parseArguments } from '@core/commands/CommandHandler';
 import { Character } from '@core/entities/character';
 import { Zone, buildZonedKey } from '@core/entities/zone';
-import { Instance } from '@server/GameServerInstance';
+import { getGameServerSafely } from '@server/GameServerInstance';
 
 export const registerCommands = () => {
-  if (!Instance.gameServer) {
-    return;
-  }
+  const gameServer = getGameServerSafely();
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@force',
     admin: true,
     handler: (invoker, command) => {
@@ -25,11 +23,11 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@zlist',
     admin: true,
     handler: (invoker) => {
-      const zones = Instance.gameServer?.catalog.getZones() ?? [];
+      const zones = gameServer.catalog.getZones() ?? [];
       zones.sort((a, b) => a.key.localeCompare(b.key));
 
       const buffer = zones.map((zone) => `[${zone.key}] ${zone}`).join('\n');
@@ -56,7 +54,7 @@ export const registerCommands = () => {
     });
   };
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@zclear',
     admin: true,
     handler: (invoker) => {
@@ -64,7 +62,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@zreset',
     admin: true,
     handler: (invoker) => {
@@ -73,7 +71,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@rlist',
     admin: true,
     handler: (invoker, command) => {
@@ -105,7 +103,7 @@ export const registerCommands = () => {
     });
   };
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@rclear',
     admin: true,
     handler: (invoker) => {
@@ -113,7 +111,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@rreset',
     aliases: ['@reset'],
     admin: true,
@@ -123,14 +121,14 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@rgoto',
     admin: true,
     handler: (invoker, command) => {
       if (!command.rest) {
         return invoker.emitTo('Go where?');
       }
-      const room = Instance.gameServer?.catalog.lookupRoom(command.rest, invoker.room.zone);
+      const room = gameServer.catalog.lookupRoom(command.rest, invoker.room.zone);
       if (!room) {
         return invoker.emitTo('Unknown room.');
       }
@@ -145,7 +143,7 @@ export const registerCommands = () => {
 
   const findCharacter = (invoker: Character, key: string): Character | undefined => {
     const fullKey = buildZonedKey(key, invoker.zone);
-    const characters = Instance.gameServer?.catalog
+    const characters = gameServer.catalog
       .getZones()
       .map((zone) => zone.characters.find((character) => character.key === fullKey || character.key === key))
       .flat()
@@ -156,14 +154,14 @@ export const registerCommands = () => {
     return characters[0];
   };
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@clist',
     admin: true,
     handler: (invoker, command) => {
       const response = parseArguments(invoker, command.params, '| zone');
       const zone = response?.length === 1 ? (response[0] as Zone) : invoker.room.zone;
 
-      const definitions = Instance.gameServer?.catalog.getCharacterDefinitions(zone) ?? [];
+      const definitions = gameServer.catalog.getCharacterDefinitions(zone) ?? [];
       definitions.sort((a, b) => a.key.localeCompare(b.key));
 
       const buffer = definitions.map((definition) => `[${definition.key}] <y>${definition.name}<n>`).join('\n');
@@ -171,7 +169,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@cload',
     admin: true,
     handler: (invoker, command) => {
@@ -179,7 +177,7 @@ export const registerCommands = () => {
         return invoker.emitTo('Load which character?');
       }
       try {
-        const character = Instance.gameServer?.catalog.loadCharacter(command.rest, invoker.room.zone, invoker.room);
+        const character = gameServer.catalog.loadCharacter(command.rest, invoker.room.zone, invoker.room);
         if (!character) {
           return invoker.emitTo(`Unknown character: ${command.rest}`);
         }
@@ -191,7 +189,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@cwhere',
     admin: true,
     handler: (invoker, command) => {
@@ -204,7 +202,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@cgoto',
     admin: true,
     handler: (invoker, command) => {
@@ -220,14 +218,14 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@ilist',
     admin: true,
     handler: (invoker, command) => {
       const response = parseArguments(invoker, command.params, '| zone');
       const zone = response?.length === 1 ? (response[0] as Zone) : invoker.room.zone;
 
-      const definitions = Instance.gameServer?.catalog.getItemDefinitions(zone) ?? [];
+      const definitions = gameServer.catalog.getItemDefinitions(zone) ?? [];
       definitions.sort((a, b) => a.key.localeCompare(b.key));
 
       const buffer = definitions.map((definition) => `[${definition.key}] <y>${definition.name}\n<D>${definition.description}<n>`).join('\n\n');
@@ -235,7 +233,7 @@ export const registerCommands = () => {
     },
   });
 
-  Instance.gameServer.commandHandler.registerCommand({
+  gameServer.commandHandler.registerCommand({
     name: '@iload',
     admin: true,
     handler: (invoker, command) => {
@@ -264,7 +262,7 @@ export const registerCommands = () => {
       }
 
       try {
-        const item = Instance.gameServer?.catalog.loadItem(itemKey, invoker.room.zone, { modifications });
+        const item = gameServer.catalog.loadItem(itemKey, invoker.room.zone, { modifications });
         if (item) {
           invoker.addItem(item);
           return invoker.emitTo(`${item} loaded to your inventory.`);

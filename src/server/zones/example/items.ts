@@ -1,14 +1,10 @@
 import { Zone } from '@core/entities/zone';
-import { Instance } from '@server/GameServerInstance';
+import { getGameServerSafely } from '@server/GameServerInstance';
 import { ItemFlag } from '@core/entities/item';
-import { BodyPosition } from '@server/modules/core/entities/equipment';
 
 export const registerItems = (zone: Zone) => {
-  if (!Instance.gameServer) {
-    return;
-  }
-
-  const catalog = Instance.gameServer.catalog;
+  const gameServer = getGameServerSafely();
+  const catalog = gameServer.catalog;
 
   catalog.registerItemDefinition(
     {

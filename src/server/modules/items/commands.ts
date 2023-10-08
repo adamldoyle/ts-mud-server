@@ -1,15 +1,12 @@
 import { parseArguments } from '@core/commands/CommandHandler';
 import { Item, matchItems } from '@core/entities/item';
-import { Instance } from '@server/GameServerInstance';
+import { getGameServerSafely } from '@server/GameServerInstance';
 import { Character } from '@core/entities/character';
 import { BodyPosition, BodyPositionInfo, lookAtEquipment, removeItem, wearItem } from '@core/entities/equipment';
 
 export const registerCommands = () => {
-  if (!Instance.gameServer) {
-    return;
-  }
-
-  const commandHandler = Instance.gameServer.commandHandler;
+  const gameServer = getGameServerSafely();
+  const commandHandler = gameServer.commandHandler;
 
   commandHandler.registerCommand({
     name: 'drop',

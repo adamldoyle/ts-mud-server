@@ -1,3 +1,4 @@
+import clone from 'just-clone';
 import { logger } from '@shared/Logger';
 import { Zone, buildZonedKey, splitZonedKey } from './zone';
 import { Room } from './room';
@@ -76,7 +77,7 @@ export const createCatalog = (): ICatalog => {
     if (!definition) {
       return logger.error(`Unknown character: ${zonedKey}`);
     }
-    return definition;
+    return clone(definition);
   };
 
   const loadCharacter = (key: string, zone: Zone, destination: Room): Character => {
@@ -114,7 +115,7 @@ export const createCatalog = (): ICatalog => {
     if (!definition) {
       return logger.error(`Unknown item: ${zonedKey}`);
     }
-    return definition;
+    return clone(definition);
   };
 
   const loadItem = (key: string, zone: Zone, overloadDefinition?: Partial<IItemDefinition>): Item => {

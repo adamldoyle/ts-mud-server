@@ -296,7 +296,7 @@ describe('GameServer', () => {
       expect(gameServer.partialLogins).toEqual({});
     });
 
-    test(`logins in character if payload includes character name`, () => {
+    test(`logs in character if payload includes character name`, () => {
       (account.getPotentialAccount as jest.Mock).mockReturnValue({ accountId: 'testAccountId' });
       (fs.existsSync as jest.Mock).mockReturnValue(true);
       (fs.readFileSync as jest.Mock).mockReturnValue(
