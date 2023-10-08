@@ -208,6 +208,12 @@ describe('core/entities/room', () => {
         expect(exit.canPass(npc)).toBeFalsy();
         expect(exit.canPass(player)).toBeFalsy();
       });
+
+      test('returns false if impassable', () => {
+        const exit = buildExit([rooms.ExitFlag.IMPASSABLE]);
+        expect(exit.canPass(npc)).toBeFalsy();
+        expect(exit.canPass(player)).toBeFalsy();
+      });
     });
 
     describe('canPeek', () => {
@@ -219,6 +225,12 @@ describe('core/entities/room', () => {
 
       test('returns true if open door', () => {
         const exit = buildExit([rooms.ExitFlag.DOOR]);
+        expect(exit.canPeek(npc)).toBeTruthy();
+        expect(exit.canPeek(player)).toBeTruthy();
+      });
+
+      test('returns true if impassable', () => {
+        const exit = buildExit([rooms.ExitFlag.IMPASSABLE]);
         expect(exit.canPeek(npc)).toBeTruthy();
         expect(exit.canPeek(player)).toBeTruthy();
       });
@@ -543,12 +555,14 @@ describe('core/entities/room', () => {
             { direction: 'north', destination: 'origin' },
             { direction: 'south', destination: 'origin', flags: [rooms.ExitFlag.CLOSED] },
             { direction: 'west', destination: 'origin', flags: [rooms.ExitFlag.SECRET] },
+            { direction: 'east', destination: 'origin', flags: [rooms.ExitFlag.IMPASSABLE] },
           ],
         });
         room.finalize();
         const output = room.lookAt(npc);
         expect(output).toContain('north<n> :: origin name');
         expect(output).toContain('[south]<n> :: origin name');
+        expect(output).toContain('(east)<n> :: origin name');
         expect(output).not.toContain('west');
       });
 

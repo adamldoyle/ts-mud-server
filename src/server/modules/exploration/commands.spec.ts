@@ -82,8 +82,8 @@ Inventory:
 
 <c>other2 name<n> is here.
 
-  - <y>       south<n> :: testRoom name
-  - <y>      [east]<n> :: testRoom name`);
+  - <y>      [east]<n> :: testRoom name
+  - <y>       south<n> :: testRoom name`);
     });
 
     test('looks at item in inventory if param is item identifier', () => {
