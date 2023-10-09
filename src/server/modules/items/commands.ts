@@ -170,7 +170,7 @@ export const registerCommands = () => {
   commandHandler.registerCommand({
     name: 'inventory',
     aliases: ['i', 'inv'],
-    handler: (invoker, command) => {
+    handler: (invoker) => {
       const target = invoker;
       invoker.emitTo(target.lookAtInventory(invoker));
     },
@@ -194,7 +194,7 @@ export const registerCommands = () => {
   commandHandler.registerCommand({
     name: 'equipment',
     aliases: ['eq'],
-    handler: (invoker, command) => {
+    handler: (invoker) => {
       const target = invoker;
       invoker.emitTo(lookAtEquipment(invoker, target));
     },

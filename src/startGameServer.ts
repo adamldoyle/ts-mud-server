@@ -1,6 +1,6 @@
 process.env.mudServiceName = 'game-server';
 import { logger } from '@shared/Logger';
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getGameServerSafely } from '@server/GameServerInstance';
 import { GameServer } from '@server/GameServer';
 import { loadSettings } from './loadSettings';
 
