@@ -1,4 +1,4 @@
-import { ExitFlag, Room } from '@core/entities/room';
+import { Room } from '@core/entities/room';
 import { Zone } from '@server/modules/core/entities/zone';
 
 export const registerRooms = (zone: Zone) => {

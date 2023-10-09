@@ -9,7 +9,7 @@ export const registerCommands = () => {
     name: 'chat',
     handler: (invoker, command) => {
       invoker.emitTo(`You chat, "${command.rest}"`);
-      Object.values(gameServer.playersByName ?? []).forEach((other) => {
+      Object.values(gameServer.playersByName).forEach((other) => {
         if (other !== invoker) {
           other.emitTo(`${invoker} chats, "${command.rest}"`);
         }

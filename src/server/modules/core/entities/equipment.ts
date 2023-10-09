@@ -1,4 +1,4 @@
-import { Instance } from '@server/GameServerInstance';
+import { getCatalogSafely } from '@server/GameServerInstance';
 import { logger } from '@shared/Logger';
 import { Character } from './character';
 import { IItemDefinition, Item, ItemFlag } from './item';
@@ -90,10 +90,7 @@ export const removeItem = (invoker: Character, item: Item): [true, BodyPosition]
 };
 
 export const buildEquipment = (invoker: Character, definitions?: Partial<Record<BodyPosition, IEquipmentDefinition>>): IEquipment => {
-  const catalog = Instance.gameServer?.catalog;
-  if (!catalog) {
-    throw new Error('Referencing catalog before initialization');
-  }
+  const catalog = getCatalogSafely();
   return Object.entries(definitions ?? {}).reduce((acc, [bodyPosition, definition]) => {
     try {
       const item = catalog.loadItem(definition.key, invoker.zone, definition);

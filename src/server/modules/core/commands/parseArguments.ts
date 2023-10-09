@@ -1,7 +1,7 @@
 import { Character, matchCharacters } from '@core/entities/character';
 import { Item, matchItems } from '@core/entities/item';
 import { Exit, DIRECTION_ALIASES } from '@core/entities/room';
-import { Instance } from '@server/GameServerInstance';
+import { getCatalogSafely } from '@server/GameServerInstance';
 
 interface CharacterCheck {
   (invoker: Character, target: Character): boolean;
@@ -121,16 +121,13 @@ export const parseArguments = (invoker: Character, params: string[], syntax: str
       response.push(matches[0]);
       paramsPieceIndex++;
     } else if (syntaxPiece.startsWith('zone')) {
-      const zone = Instance.gameServer?.catalog.lookupZone(paramsPiece);
+      const zone = getCatalogSafely().lookupZone(paramsPiece);
       if (!zone) {
         return undefined;
       }
       response.push(zone);
       paramsPieceIndex++;
     } else if (syntaxPiece === 'word') {
-      if (!paramsPiece) {
-        return undefined;
-      }
       response.push(paramsPiece);
       paramsPieceIndex++;
     } else if (syntaxPiece === 'string') {
@@ -139,7 +136,7 @@ export const parseArguments = (invoker: Character, params: string[], syntax: str
     } else if (syntaxPiece === paramsPiece) {
       paramsPieceIndex++;
     } else if (!optional) {
-      return remainingOptional ? response : undefined;
+      return undefined;
     }
   }
 

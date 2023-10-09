@@ -19,7 +19,7 @@ process.on('uncaughtException', function (err) {
 
 const saveGame = () => {
   logger.info('Saving game');
-  Instance.gameServer?.save();
+  getGameServerSafely().save();
 };
 
 const handleExit = async () => {

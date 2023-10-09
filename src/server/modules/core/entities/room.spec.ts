@@ -1,4 +1,4 @@
-import { Instance } from '@server/GameServerInstance';
+import { getCatalogSafely, Instance } from '@server/GameServerInstance';
 import { calculateTime, TimeOfDay } from '@server/modules/calendar';
 import { buildCharacter, buildItem, buildPlayer, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { ICommandDefinition } from '../commands/CommandHandler';
@@ -367,6 +367,18 @@ describe('core/entities/room', () => {
         expect(room.exits['south'].destination).toEqual(otherRoom2);
       });
 
+      test('throws error on direction collision', () => {
+        buildRoom(zone, 'otherRoom1');
+        buildRoom(zone, 'otherRoom2');
+        const room = buildRoom(zone, 'testKey', {
+          exits: [
+            { direction: 'north', destination: 'otherRoom1@testZone' },
+            { direction: 'north', destination: 'otherRoom2@testZone' },
+          ],
+        });
+        expect(() => room.finalize()).toThrowError();
+      });
+
       test('adds any characters from saved room', () => {
         const charDef: ICharacterDefinition = {
           key: 'testChar',
@@ -374,7 +386,7 @@ describe('core/entities/room', () => {
           roomDescription: 'Test character room description',
           description: 'Test character look description',
         };
-        Instance.gameServer?.catalog.registerCharacterDefinition(charDef, zone);
+        getCatalogSafely().registerCharacterDefinition(charDef, zone);
         const room = buildRoom(zone, 'testKey');
         expect(room.characters).toEqual([]);
         room.finalize({
@@ -400,7 +412,7 @@ describe('core/entities/room', () => {
           roomDescription: 'Test character room description',
           description: 'Test character look description',
         };
-        Instance.gameServer?.catalog.registerCharacterDefinition(charDef, zone);
+        getCatalogSafely().registerCharacterDefinition(charDef, zone);
         const room = buildRoom(zone, 'testKey');
         expect(room.characters).toEqual([]);
         room.finalize({
@@ -427,7 +439,7 @@ describe('core/entities/room', () => {
           name: 'Test character',
           commands: [commandDef],
         };
-        Instance.gameServer?.catalog.registerCharacterDefinition(charDef, zone);
+        getCatalogSafely().registerCharacterDefinition(charDef, zone);
         const room = buildRoom(zone, 'testKey');
         expect(room.characters).toEqual([]);
         room.finalize({
@@ -454,7 +466,7 @@ describe('core/entities/room', () => {
           roomDescription: 'Test item room description',
           description: 'Test item look description',
         };
-        Instance.gameServer?.catalog.registerItemDefinition(itemDef, zone);
+        getCatalogSafely().registerItemDefinition(itemDef, zone);
         const room = buildRoom(zone, 'testKey');
         expect(room.items).toEqual([]);
         room.finalize({
@@ -480,7 +492,7 @@ describe('core/entities/room', () => {
           roomDescription: 'Test item room description',
           description: 'Test item look description',
         };
-        Instance.gameServer?.catalog.registerItemDefinition(itemDef, zone);
+        getCatalogSafely().registerItemDefinition(itemDef, zone);
         const room = buildRoom(zone, 'testKey');
         expect(room.characters).toEqual([]);
         room.finalize({
@@ -709,8 +721,8 @@ describe('core/entities/room', () => {
 
     describe('reset', () => {
       test('adds characters from reset definition', () => {
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar2', name: 'Test char 2' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar2', name: 'Test char 2' }, zone);
         const room = buildRoom(zone, 'testKey', { resets: { characters: [{ key: 'testChar1' }, { key: 'testChar2' }] } });
         room.finalize();
         expect(room.characters.length).toEqual(0);
@@ -720,7 +732,7 @@ describe('core/entities/room', () => {
       });
 
       test('skips character if already in room', () => {
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
         const room = buildRoom(zone, 'testKey', { resets: { characters: [{ key: 'testChar1' }] } });
         room.finalize();
         room.reset();
@@ -735,7 +747,7 @@ describe('core/entities/room', () => {
 
       // TODO: Multiple resets for a single monster aren't joined together to make sure the total amount is there
       test('skips character if already in different room in zone', () => {
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
         const room1 = buildRoom(zone, 'testKey1', { resets: { characters: [{ key: 'testChar1' }] } });
         room1.finalize();
         const room2 = buildRoom(zone, 'testKey2', { resets: { characters: [{ key: 'testChar1' }] } });
@@ -748,22 +760,43 @@ describe('core/entities/room', () => {
       });
 
       test('adds character even if in zone if dontCheckWholeZone is set', () => {
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
-        const room1 = buildRoom(zone, 'testKey1', { resets: { characters: [{ key: 'testChar1', dontCheckWholeZone: true }] } });
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar2', name: 'Test char 2' }, zone);
+        const room1 = buildRoom(zone, 'testKey1', {
+          resets: {
+            characters: [
+              { key: 'testChar1', dontCheckWholeZone: true },
+              { key: 'testChar2', dontCheckWholeZone: true },
+            ],
+          },
+        });
         room1.finalize();
-        const room2 = buildRoom(zone, 'testKey2', { resets: { characters: [{ key: 'testChar1', dontCheckWholeZone: true }] } });
+        const room2 = buildRoom(zone, 'testKey2', {
+          resets: {
+            characters: [
+              { key: 'testChar1', dontCheckWholeZone: true },
+              { key: 'testChar2', dontCheckWholeZone: true },
+            ],
+          },
+        });
         room2.finalize();
+        expect(room1.characters.length).toEqual(0);
+        expect(room2.characters.length).toEqual(0);
+
         room1.reset();
-        expect(room1.characters.length).toEqual(1);
-        expect(room1.characters.map(({ key }) => key)).toEqual(['testChar1@testZone']);
+        expect(room1.characters.length).toEqual(2);
+        expect(room2.characters.length).toEqual(0);
+        expect(room1.characters.map(({ key }) => key)).toEqual(['testChar1@testZone', 'testChar2@testZone']);
+
         room2.reset();
-        expect(room2.characters.length).toEqual(1);
-        expect(room1.characters.map(({ key }) => key)).toEqual(['testChar1@testZone']);
+        expect(room1.characters.length).toEqual(2);
+        expect(room2.characters.length).toEqual(2);
+        expect(room1.characters.map(({ key }) => key)).toEqual(['testChar1@testZone', 'testChar2@testZone']);
       });
 
       test('adds time based reset if the time matches', () => {
         const timeOfDay = calculateTime().timeOfDay;
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
         const room = buildRoom(zone, 'testKey', { resets: { characters: [{ key: 'testChar1', times: [timeOfDay] }] } });
         room.finalize();
         expect(room.characters.length).toEqual(0);
@@ -774,7 +807,7 @@ describe('core/entities/room', () => {
 
       test('skips time based reset if the time mismatch', () => {
         const timeOfDay = calculateTime().timeOfDay === TimeOfDay.AFTERNOON ? TimeOfDay.MORNING : TimeOfDay.AFTERNOON;
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
         const room = buildRoom(zone, 'testKey', { resets: { characters: [{ key: 'testChar1', times: [timeOfDay] }] } });
         room.finalize();
         expect(room.characters.length).toEqual(0);
@@ -783,7 +816,7 @@ describe('core/entities/room', () => {
       });
 
       test('emits creation message on character add if defined', () => {
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
         const room = buildRoom(zone, 'testKey', { resets: { characters: [{ key: 'testChar1', creationMessage: 'Test char 1 added' }] } });
         jest.spyOn(room, 'emitTo');
         room.finalize();
@@ -797,7 +830,7 @@ describe('core/entities/room', () => {
       // to a room (outside of @cload) so they shouldn't grow beyond desired amounts (unless dontCheckWholeZone set on
       // a roaming monster, so don't do that)
       test(`characters not normally removed if not part of reset`, () => {
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
         const room = buildRoom(zone, 'testKey', { resets: { characters: [] } });
         room.finalize({
           key: 'testKey',
@@ -814,7 +847,7 @@ describe('core/entities/room', () => {
 
       test('character removed if part of a time based reset and its not that time', () => {
         const timeOfDay = calculateTime().timeOfDay === TimeOfDay.AFTERNOON ? TimeOfDay.MORNING : TimeOfDay.AFTERNOON;
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
         const room = buildRoom(zone, 'testKey', { resets: { characters: [{ key: 'testChar1', times: [timeOfDay] }] } });
         room.finalize({
           key: 'testKey',
@@ -831,7 +864,7 @@ describe('core/entities/room', () => {
 
       test('emits destruction message on removal if defined', () => {
         const timeOfDay = calculateTime().timeOfDay === TimeOfDay.AFTERNOON ? TimeOfDay.MORNING : TimeOfDay.AFTERNOON;
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
         const room = buildRoom(zone, 'testKey', {
           resets: { characters: [{ key: 'testChar1', times: [timeOfDay], destructionMessage: 'Test char 1 removed' }] },
         });
@@ -851,8 +884,8 @@ describe('core/entities/room', () => {
       });
 
       test('adds items from reset definition', () => {
-        Instance.gameServer?.catalog.registerItemDefinition({ key: 'testItem1', name: 'Test item 1' }, zone);
-        Instance.gameServer?.catalog.registerItemDefinition({ key: 'testItem2', name: 'Test item 2' }, zone);
+        getCatalogSafely().registerItemDefinition({ key: 'testItem1', name: 'Test item 1' }, zone);
+        getCatalogSafely().registerItemDefinition({ key: 'testItem2', name: 'Test item 2' }, zone);
         const room = buildRoom(zone, 'testKey', { resets: { items: [{ key: 'testItem1' }, { key: 'testItem2' }] } });
         room.finalize();
         expect(room.items.length).toEqual(0);
@@ -862,7 +895,7 @@ describe('core/entities/room', () => {
       });
 
       test('skips item if already in room', () => {
-        Instance.gameServer?.catalog.registerItemDefinition({ key: 'testItem1', name: 'Test item 1' }, zone);
+        getCatalogSafely().registerItemDefinition({ key: 'testItem1', name: 'Test item 1' }, zone);
         const room = buildRoom(zone, 'testKey', { resets: { items: [{ key: 'testItem1' }] } });
         room.finalize();
         room.reset();
@@ -887,8 +920,8 @@ describe('core/entities/room', () => {
 
     describe('toJson', () => {
       test('converts room to saveable definition', () => {
-        Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
-        Instance.gameServer?.catalog.registerItemDefinition({ key: 'testItem1', name: 'Test item 1' }, zone);
+        getCatalogSafely().registerCharacterDefinition({ key: 'testChar1', name: 'Test char 1' }, zone);
+        getCatalogSafely().registerItemDefinition({ key: 'testItem1', name: 'Test item 1' }, zone);
         const room = buildRoom(zone, 'testKey', { exits: [{ direction: 'north', destination: 'origin' }] });
         room.finalize({
           key: 'testKey',

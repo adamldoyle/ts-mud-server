@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { v4 } from 'uuid';
-import { Instance } from '@server/GameServerInstance';
+import { getCatalogSafely, getGameServerSafely } from '@server/GameServerInstance';
 import { flagUtils } from '@core/utils';
 import { TimeOfDay } from '@modules/calendar';
 import { buildCommandHandler, ICommandDefinition, ICommandHandler } from '@core/commands/CommandHandler';
@@ -121,7 +121,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
 
   finalize() {
     this.definition.inventory?.forEach((invDefinition) => {
-      const item = Instance.gameServer?.catalog.loadItem(invDefinition.key, this.zone, invDefinition);
+      const item = getCatalogSafely().loadItem(invDefinition.key, this.zone, invDefinition);
       if (item) {
         this.addItem(item);
       }
@@ -147,7 +147,12 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
     const title = `${this}`;
     const equipment = lookAtEquipment(looker, this, true);
     const inventory = this.lookAtInventory(looker);
-    return `${title}${looker.admin ? ` [${this.key}]` : ''}\n${this.description}\n\n${equipment}${inventory ? `\n\n${inventory}` : ''}`;
+    return `${title}${looker.admin ? ` [${this.key}]` : ''}
+${this.description}
+
+${equipment}
+
+${inventory}`;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -246,7 +251,7 @@ export class Character extends ItemContainer(BaseKeyedEntity) {
   }
 
   sendCommand(rawInput: string) {
-    Instance.gameServer?.handleCommand(this, rawInput);
+    getGameServerSafely().handleCommand(this, rawInput);
   }
 
   toString() {
@@ -258,9 +263,10 @@ export class Player extends Character {
   accountId: string;
   lastSave: number;
   constructor(definition: IPlayerDefinition) {
-    let room = Instance.gameServer?.catalog.lookupRoom(definition.room);
-    if (!room && Instance.gameServer?.config.startingRoom) {
-      room = Instance.gameServer?.catalog.lookupRoom(Instance.gameServer?.config.startingRoom);
+    const gameServer = getGameServerSafely();
+    let room = gameServer.catalog.lookupRoom(definition.room);
+    if (!room && gameServer.config.startingRoom) {
+      room = gameServer.catalog.lookupRoom(gameServer.config.startingRoom);
     }
     if (!room) {
       throw new Error('Unable to place character in room');
@@ -292,7 +298,7 @@ export class Player extends Character {
   }
 
   emitTo(message: string): undefined {
-    Instance.gameServer?.sendMessageToCharacter(this.name, message + '\n');
+    getGameServerSafely().sendMessageToCharacter(this.name, message + '\n');
     return;
   }
 

@@ -17,7 +17,7 @@ describe('communication/commands', () => {
   });
 
   const callCommand = (invoker: Character, rawInput: string) => {
-    Instance.gameServer?.commandHandler.handleCommand(invoker, rawInput, undefined);
+    getGameServerSafely().commandHandler.handleCommand(invoker, rawInput, undefined);
   };
 
   describe('chat', () => {
@@ -97,6 +97,23 @@ describe('communication/commands', () => {
       expect(invoker.emitTo).toBeCalledWith(`You tell ${player}, "test message"`);
       expect(player.emitTo).toBeCalledWith(`${invoker} tells you, "test message"`);
       expect(otherPlayer.emitTo).not.toBeCalled();
+    });
+
+    test('sends error if no target', () => {
+      callCommand(invoker, `tell`);
+      expect(invoker.emitTo).toBeCalledWith(`Tell whom what?`);
+    });
+
+    test('sends error if no message', () => {
+      const player = buildPlayer('player', invoker.room);
+      callCommand(invoker, `tell ${player.key}`);
+      expect(invoker.emitTo).toBeCalledWith(`Tell whom what?`);
+    });
+
+    test('sends error if unknown target', () => {
+      getGameServerSafely().playersByName = {};
+      callCommand(invoker, `tell notaplayer test message`);
+      expect(invoker.emitTo).toBeCalledWith(`They're not around.`);
     });
   });
 });

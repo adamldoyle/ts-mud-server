@@ -144,6 +144,7 @@ export const registerCommands = () => {
       }
       const exit = response[0] as Exit;
       if (!exit.open(invoker)) {
+        // This shouldn't happen since we checked for openable above
         return invoker.emitTo(`You can't open it.`);
       }
 
@@ -177,6 +178,7 @@ export const registerCommands = () => {
       }
       const exit = response[0] as Exit;
       if (!exit.close(invoker)) {
+        // This shouldn't happen since we checked for closeable above
         return invoker.emitTo(`You can't close it.`);
       }
 

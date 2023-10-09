@@ -23,11 +23,11 @@ export const colorMessage = (input: string): string => {
     const markerIndex = input.indexOf(colorMarker, lastIndex);
     if (Object.keys(colors).includes(input[markerIndex + 1]) && input[markerIndex + 2] === colorEndMarker) {
       output += input.substring(lastIndex ?? 0, markerIndex);
-      output += `${colorStart}${dark};${colors[input[markerIndex + 1]] ?? colors['n']}m`;
+      output += `${colorStart}${dark};${colors[input[markerIndex + 1]]}m`;
       lastIndex = markerIndex + 3;
     } else if (Object.keys(colors).includes(input[markerIndex + 1].toLowerCase()) && input[markerIndex + 2] === colorEndMarker) {
       output += input.substring(lastIndex ?? 0, markerIndex);
-      output += `${colorStart}${light};${colors[input[markerIndex + 1].toLowerCase()] ?? colors['n']}m`;
+      output += `${colorStart}${light};${colors[input[markerIndex + 1].toLowerCase()]}m`;
       lastIndex = markerIndex + 3;
     } else {
       output += input.substring(lastIndex ?? 0, markerIndex + 1);

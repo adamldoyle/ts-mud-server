@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Instance } from '@server/GameServerInstance';
+import { getGameServerSafely } from '@server/GameServerInstance';
 import { buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { LoginConversation } from './LoginConversation';
 import { Room } from '@core/entities/room';
@@ -36,7 +36,7 @@ describe('LoginConversation', () => {
   };
 
   const getLastMsg = () => {
-    const calls = (Instance.gameServer?.sendMessageToAccount as jest.Mock).mock.calls;
+    const calls = (getGameServerSafely().sendMessageToAccount as jest.Mock).mock.calls;
     return calls[calls.length - 1][1];
   };
 
@@ -344,6 +344,28 @@ Dragonborn, Dwarf, Elf, Gnome, Half-Orc, Halfling, Human, Tiefling.
 Choice (or "help <race>"):`);
   });
 
+  test('shows race help if requested', () => {
+    const conversation = startConversation([]);
+    validateNoCharacterPrompt();
+    conversation.handleInput('1');
+    validateNamePrompt();
+    conversation.handleInput('Newname');
+    expect(getLastMsg()).toEqual('Create new character with name Newname? (Y/N)');
+    conversation.handleInput('Y');
+    validateRacePrompt();
+    conversation.handleInput('help gnome');
+    expect(getLastMsg()).toEqual(`
+Gnome
+
+Ability modifiers:
+  intelligence: 2
+  constitution: 1
+
+Choose race:
+Dragonborn, Dwarf, Elf, Gnome, Half-Orc, Halfling, Human, Tiefling.
+Choice (or "help <race>"):`);
+  });
+
   test('shows error if invalid class', () => {
     const conversation = startConversation([]);
     validateNoCharacterPrompt();
@@ -357,6 +379,28 @@ Choice (or "help <race>"):`);
     validateClassPrompt();
     conversation.handleInput('notaclass');
     expect(getLastMsg()).toEqual(`Invalid choice.
+Choose class:
+Barbarian, Bard, Cleric, Druid, Fighter, Monk, Paladin, Ranger, Rogue, Sorcerer, Warlock, Wizard.
+Choice (or "help <class>"):`);
+  });
+
+  test('shows class help if requested', () => {
+    const conversation = startConversation([]);
+    validateNoCharacterPrompt();
+    conversation.handleInput('1');
+    validateNamePrompt();
+    conversation.handleInput('Newname');
+    expect(getLastMsg()).toEqual('Create new character with name Newname? (Y/N)');
+    conversation.handleInput('Y');
+    validateRacePrompt();
+    conversation.handleInput('dwarf');
+    validateClassPrompt();
+    conversation.handleInput('help rogue');
+    expect(getLastMsg()).toEqual(`
+Rogue
+
+Hit die: 1d8
+
 Choose class:
 Barbarian, Bard, Cleric, Druid, Fighter, Monk, Paladin, Ranger, Rogue, Sorcerer, Warlock, Wizard.
 Choice (or "help <class>"):`);
@@ -504,5 +548,16 @@ Abilities:
 Create this character? (Y/N)`);
     conversation.handleInput('N');
     validateNoCharacterPrompt();
+  });
+
+  test('does nothing if passing input after already complete', () => {
+    const conversation = startConversation(['Oldname']);
+    validateOldCharacterPrompt();
+    conversation.handleInput('2');
+    createCharacter(conversation);
+    expect(conversation.completeCallback).toBeCalledTimes(1);
+    jest.clearAllMocks();
+    conversation.handleInput('');
+    expect(getGameServerSafely().sendMessageToAccount).not.toBeCalled();
   });
 });

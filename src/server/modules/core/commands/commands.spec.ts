@@ -18,24 +18,24 @@ describe('core/commands/commands', () => {
   });
 
   const callCommand = (invoker: Character, rawInput: string) => {
-    Instance.gameServer?.commandHandler.handleCommand(invoker, rawInput, undefined);
+    getGameServerSafely().commandHandler.handleCommand(invoker, rawInput, undefined);
   };
 
   describe('quit', () => {
     test('logs out players', () => {
       callCommand(player, 'quit');
-      expect(Instance.gameServer?.logoutUser).toBeCalledWith(player.accountId);
+      expect(getGameServerSafely().logoutUser).toBeCalledWith(player.accountId);
     });
 
     test('no op for npcs', () => {
       callCommand(npc, 'quit');
-      expect(Instance.gameServer?.logoutUser).not.toBeCalled();
+      expect(getGameServerSafely().logoutUser).not.toBeCalled();
     });
   });
 
   describe('commands', () => {
     test('outputs registered commands', () => {
-      Instance.gameServer?.commandHandler.registerCommand({
+      getGameServerSafely().commandHandler.registerCommand({
         name: 'testcommand',
         handler: () => {},
       });
@@ -46,7 +46,7 @@ describe('core/commands/commands', () => {
     });
 
     test('outputs admin commands for admins', () => {
-      Instance.gameServer?.commandHandler.registerCommand({
+      getGameServerSafely().commandHandler.registerCommand({
         name: 'testcommand',
         admin: true,
         handler: () => {},
@@ -105,6 +105,30 @@ describe('core/commands/commands', () => {
       let output = (npc.emitTo as jest.Mock).mock.calls[0][0];
       expect(output).toContain(`Admins: Admin1, Admin2`);
       expect(output).toContain(`Players: Player1, Player2`);
+    });
+
+    test('outputs none for admins if none on', () => {
+      getGameServerSafely().playersByName = {
+        player1: { key: 'player1', toString: () => 'Player1' } as any,
+        player2: { key: 'player2', toString: () => 'Player2' } as any,
+      };
+      callCommand(npc, 'who');
+      expect(npc.emitTo).toBeCalledTimes(1);
+      let output = (npc.emitTo as jest.Mock).mock.calls[0][0];
+      expect(output).toContain(`Admins: None`);
+      expect(output).toContain(`Players: Player1, Player2`);
+    });
+
+    test('outputs none for players if none on', () => {
+      getGameServerSafely().playersByName = {
+        admin1: { admin: true, key: 'admin1', toString: () => 'Admin1' } as any,
+        admin2: { admin: true, key: 'admin2', toString: () => 'Admin2' } as any,
+      };
+      callCommand(npc, 'who');
+      expect(npc.emitTo).toBeCalledTimes(1);
+      let output = (npc.emitTo as jest.Mock).mock.calls[0][0];
+      expect(output).toContain(`Admins: Admin1, Admin2`);
+      expect(output).toContain(`Players: None`);
     });
   });
 

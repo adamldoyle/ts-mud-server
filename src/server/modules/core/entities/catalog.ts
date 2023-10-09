@@ -89,6 +89,7 @@ export const createCatalog = (): ICatalog => {
     const { zoneKey } = splitZonedKey(zonedKey);
     const actualZone = lookupZone(zoneKey);
     if (!actualZone) {
+      // Should be impossible since character lookup succeeded
       throw new Error(`Unknown zone: ${zoneKey}`);
     }
     return new Character(definition, actualZone, destination);
@@ -127,6 +128,7 @@ export const createCatalog = (): ICatalog => {
     const { zoneKey } = splitZonedKey(zonedKey);
     const actualZone = lookupZone(zoneKey);
     if (!actualZone) {
+      // Should be impossible since item lookup succeeded
       throw new Error(`No zone for key: ${zoneKey}`);
     }
     const item = new Item(

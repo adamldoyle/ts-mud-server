@@ -1,4 +1,4 @@
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getCatalogSafely } from '@server/GameServerInstance';
 import { ICharacterDefinition, Character, IPlayerDefinition, Player } from '@core/entities/character';
 import { IItemDefinition, Item } from '@core/entities/item';
 import { Room, IExitDefinition, Exit, IRoomDefinition } from '@core/entities/room';
@@ -30,7 +30,7 @@ export const initializeTestServer = (overrides?: Partial<GameServer>) => {
 export const buildZone = (definition?: Partial<IZoneDefinition>, persist?: boolean) => {
   const zone = new Zone({ key: 'testZone', zoneName: 'Test zone', ...definition });
   if (persist) {
-    Instance.gameServer?.catalog.registerZone(zone);
+    getCatalogSafely().registerZone(zone);
   }
   return zone;
 };

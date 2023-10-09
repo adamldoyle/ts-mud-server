@@ -1,4 +1,4 @@
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getGameServerSafely } from '@server/GameServerInstance';
 import { buildCharacter, buildItem, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { Character } from '@core/entities/character';
 import { registerCommands } from './commands';
@@ -23,7 +23,7 @@ describe('items/commands', () => {
   });
 
   const callCommand = (invoker: Character, rawInput: string) => {
-    Instance.gameServer?.commandHandler.handleCommand(invoker, rawInput, undefined);
+    getGameServerSafely().commandHandler.handleCommand(invoker, rawInput, undefined);
   };
 
   describe('drop', () => {
@@ -169,6 +169,25 @@ describe('items/commands', () => {
       expect(other1.emitTo).toBeCalledWith(`${invoker} puts ${item} in ${container}.`);
     });
 
+    test('sends message for bad syntax', () => {
+      const item = buildItem(zone, 'item1');
+      const container = buildItem(zone, 'container1', { flags: [ItemFlag.CONTAINER] });
+      room.addItem(container);
+      invoker.addItem(item);
+
+      callCommand(invoker, `put`);
+      expect(invoker.emitTo).toBeCalledWith(`Invalid syntax: put {item} in {character}`);
+      jest.clearAllMocks();
+
+      callCommand(invoker, `put item1`);
+      expect(invoker.emitTo).toBeCalledWith(`Invalid syntax: put {item} in {character}`);
+      jest.clearAllMocks();
+
+      callCommand(invoker, `put item1 container1`);
+      expect(invoker.emitTo).toBeCalledWith(`Invalid syntax: put {item} in {character}`);
+      jest.clearAllMocks();
+    });
+
     test('sends message if container not in room', () => {
       callCommand(invoker, `put item1 in container1`);
       expect(invoker.emitTo).toBeCalledWith(`You don't see one.`);
@@ -271,19 +290,28 @@ describe('items/commands', () => {
       invoker.addItem(item1);
       invoker.addItem(item2);
       callCommand(invoker, 'inventory');
-      expect(invoker.emitTo).toBeCalledWith(`${invoker}
-Inventory:
+      expect(invoker.emitTo).toBeCalledWith(`Inventory:
   <y>item1 name<n>
   <y>item2 name<n>`);
     });
+  });
+
+  describe('@iventory', () => {
+    test('requires target', () => {
+      const admin = buildCharacter(invoker.zone, 'admin', invoker.room, { admin: true });
+      callCommand(admin, '@inventory');
+      expect(admin.emitTo).toBeCalledWith(`Whose inventory do you want to see?`);
+    });
 
     test('shows other character inventory', () => {
+      const admin = buildCharacter(invoker.zone, 'admin', invoker.room, { admin: true });
+      callCommand(admin, '@inventory');
       const item1 = buildItem(zone, 'item1');
       const item2 = buildItem(zone, 'item2');
       other1.addItem(item1);
-      invoker.addItem(item2);
-      callCommand(invoker, 'inventory other1');
-      expect(invoker.emitTo).toBeCalledWith(`${other1}
+      admin.addItem(item2);
+      callCommand(admin, '@inventory other1');
+      expect(admin.emitTo).toBeCalledWith(`${other1} [other1]
 Inventory:
   <y>item1 name<n>`);
     });
@@ -296,8 +324,7 @@ Inventory:
       invoker.equipment.FEET = item1;
       invoker.equipment.HANDS = item2;
       callCommand(invoker, 'equipment');
-      expect(invoker.emitTo).toBeCalledWith(`${invoker}
-Equipment:
+      expect(invoker.emitTo).toBeCalledWith(`Equipment:
   held (right): nothing
    held (left): nothing
           head: nothing
@@ -308,14 +335,23 @@ Equipment:
           legs: nothing
           feet: <y>item1 name<n>`);
     });
+  });
+
+  describe('@equipment', () => {
+    test('requires target', () => {
+      const admin = buildCharacter(invoker.zone, 'admin', invoker.room, { admin: true });
+      callCommand(admin, '@equipment');
+      expect(admin.emitTo).toBeCalledWith(`Whose equipment do you want to see?`);
+    });
 
     test('shows other character equipment', () => {
+      const admin = buildCharacter(invoker.zone, 'admin', invoker.room, { admin: true });
       const item1 = buildItem(zone, 'item1');
       const item2 = buildItem(zone, 'item2');
-      invoker.equipment.FEET = item1;
+      admin.equipment.FEET = item1;
       other1.equipment.HANDS = item2;
-      callCommand(invoker, 'equipment other1');
-      expect(invoker.emitTo).toBeCalledWith(`${other1}
+      callCommand(admin, '@equipment other1');
+      expect(admin.emitTo).toBeCalledWith(`${other1} [other1]
 Equipment:
   held (right): nothing
    held (left): nothing

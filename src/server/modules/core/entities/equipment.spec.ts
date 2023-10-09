@@ -1,4 +1,4 @@
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getCatalogSafely } from '@server/GameServerInstance';
 import { buildCharacter, buildItem, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { Character } from './character';
 import * as equipment from './equipment';
@@ -121,14 +121,8 @@ describe('equipment', () => {
     });
 
     test(`loads and adds equipment to user based on definition`, () => {
-      Instance.gameServer?.catalog.registerItemDefinition(
-        { key: 'item1', name: 'item1', flags: [ItemFlag.WEARABLE], wearSpots: [equipment.BodyPosition.FEET] },
-        zone
-      );
-      Instance.gameServer?.catalog.registerItemDefinition(
-        { key: 'item2', name: 'item2', flags: [ItemFlag.WEARABLE], wearSpots: [equipment.BodyPosition.HANDS] },
-        zone
-      );
+      getCatalogSafely().registerItemDefinition({ key: 'item1', name: 'item1', flags: [ItemFlag.WEARABLE], wearSpots: [equipment.BodyPosition.FEET] }, zone);
+      getCatalogSafely().registerItemDefinition({ key: 'item2', name: 'item2', flags: [ItemFlag.WEARABLE], wearSpots: [equipment.BodyPosition.HANDS] }, zone);
       equipment.buildEquipment(invoker, { FEET: { key: 'item1@testZone' }, HANDS: { key: 'item2@testZone' } });
       expect(invoker.equipment.FEET?.key).toEqual('item1@testZone');
       expect(invoker.equipment.HANDS?.key).toEqual('item2@testZone');
@@ -142,7 +136,7 @@ describe('equipment', () => {
     });
 
     test(`leaves item in inventory if unwearable`, () => {
-      Instance.gameServer?.catalog.registerItemDefinition({ key: 'item1', name: 'item1', flags: [], wearSpots: [] }, zone);
+      getCatalogSafely().registerItemDefinition({ key: 'item1', name: 'item1', flags: [], wearSpots: [] }, zone);
       equipment.buildEquipment(invoker, { FEET: { key: 'item1@testZone' } });
       expect(invoker.equipment.FEET).toBeUndefined();
       expect(invoker.items.map(({ key }) => key)).toEqual(['item1@testZone']);

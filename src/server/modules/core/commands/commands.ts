@@ -24,7 +24,8 @@ export const registerCommands = () => {
   commandHandler.registerCommand({
     name: 'commands',
     handler: (invoker) => {
-      const definitions = (commandHandler.getCommandDefinitions() ?? [])
+      const definitions = commandHandler
+        .getCommandDefinitions()
         .filter((definition) => invoker.admin || !definition.admin)
         .sort((a, b) => a.name.localeCompare(b.name));
       invoker.emitTo(`<G>Commands\n<B>${'-'.repeat(30)}\n<n>${definitions.map((command) => command.name).join('\n')}`);
@@ -67,7 +68,7 @@ export const registerCommands = () => {
   commandHandler.registerCommand({
     name: 'who',
     handler: (invoker) => {
-      const { admins, players } = Object.values(gameServer.playersByName ?? {}).reduce<{ admins: Player[]; players: Player[] }>(
+      const { admins, players } = Object.values(gameServer.playersByName).reduce<{ admins: Player[]; players: Player[] }>(
         (acc, player) => {
           if (player.admin) {
             acc.admins.push(player);

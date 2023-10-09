@@ -27,11 +27,11 @@ export const registerCommands = () => {
     name: '@zlist',
     admin: true,
     handler: (invoker) => {
-      const zones = gameServer.catalog.getZones() ?? [];
+      const zones = gameServer.catalog.getZones();
       zones.sort((a, b) => a.key.localeCompare(b.key));
 
       const buffer = zones.map((zone) => `[${zone.key}] ${zone}`).join('\n');
-      invoker.emitTo(`<G>Zones\n<B>${'-'.repeat(30)}<n>\n${buffer.length > 0 ? buffer : 'None'}`);
+      invoker.emitTo(`<G>Zones\n<B>${'-'.repeat(30)}<n>\n${buffer}`);
     },
   });
 
@@ -161,7 +161,7 @@ export const registerCommands = () => {
       const response = parseArguments(invoker, command.params, '| zone');
       const zone = response?.length === 1 ? (response[0] as Zone) : invoker.room.zone;
 
-      const definitions = gameServer.catalog.getCharacterDefinitions(zone) ?? [];
+      const definitions = gameServer.catalog.getCharacterDefinitions(zone);
       definitions.sort((a, b) => a.key.localeCompare(b.key));
 
       const buffer = definitions.map((definition) => `[${definition.key}] <y>${definition.name}<n>`).join('\n');
@@ -178,9 +178,6 @@ export const registerCommands = () => {
       }
       try {
         const character = gameServer.catalog.loadCharacter(command.rest, invoker.room.zone, invoker.room);
-        if (!character) {
-          return invoker.emitTo(`Unknown character: ${command.rest}`);
-        }
         character.finalize();
         invoker.room.emitTo(`${character} appears in a cloud of smoke...`, [character]);
       } catch (error) {
@@ -225,7 +222,7 @@ export const registerCommands = () => {
       const response = parseArguments(invoker, command.params, '| zone');
       const zone = response?.length === 1 ? (response[0] as Zone) : invoker.room.zone;
 
-      const definitions = gameServer.catalog.getItemDefinitions(zone) ?? [];
+      const definitions = gameServer.catalog.getItemDefinitions(zone);
       definitions.sort((a, b) => a.key.localeCompare(b.key));
 
       const buffer = definitions.map((definition) => `[${definition.key}] <y>${definition.name}\n<D>${definition.description}<n>`).join('\n\n');
@@ -241,7 +238,7 @@ export const registerCommands = () => {
       if (!response) {
         return invoker.emitTo('Load which item?');
       }
-      const itemKey = (response[0] as string) ?? '';
+      const itemKey = response[0] as string;
       let modifications: Record<string, string> | undefined;
       if (response.length === 2) {
         try {

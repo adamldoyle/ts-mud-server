@@ -1,4 +1,4 @@
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getCatalogSafely, getGameServerSafely } from '@server/GameServerInstance';
 import { buildCharacter, buildItem, buildPlayer, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { Character } from '@core/entities/character';
 import { registerCommands } from './commands';
@@ -22,8 +22,8 @@ describe('admin/commands', () => {
 
   const callCommand = (invoker: Character, rawInput: string) => {
     // Check every call with a non-admin user
-    expect(Instance.gameServer?.commandHandler.handleCommand(nonAdmin, rawInput, undefined)).toBeFalsy();
-    Instance.gameServer?.commandHandler.handleCommand(invoker, rawInput, undefined);
+    expect(getGameServerSafely().commandHandler.handleCommand(nonAdmin, rawInput, undefined)).toBeFalsy();
+    getGameServerSafely().commandHandler.handleCommand(invoker, rawInput, undefined);
   };
 
   describe('@force', () => {
@@ -77,6 +77,24 @@ describe('admin/commands', () => {
       expect(invoker.room.items).toEqual([]);
       expect(nonAdmin.room.items).toEqual([]);
     });
+
+    test('ends any npc conversatios', () => {
+      const conversationChar = buildCharacter(invoker.room.zone, 'convo', invoker.room);
+      const conversation = { endConversation: jest.fn() } as any;
+      conversationChar.conversation = conversation;
+      expect(invoker.room.characters).toContain(conversationChar);
+      callCommand(invoker, '@zclear');
+      expect(invoker.room.characters).not.toContain(conversationChar);
+      expect(conversation.endConversation).toBeCalled();
+    });
+
+    test(`sends a message to other players`, () => {
+      const otherPlayer = buildPlayer('player2', invoker.room);
+      expect(invoker.room.characters).toContain(otherPlayer);
+      callCommand(invoker, '@zclear');
+      expect(invoker.room.characters).toContain(otherPlayer);
+      expect(otherPlayer.emitTo).toBeCalledWith(`You hear a defening thunderclap and everything around you disappears.`);
+    });
   });
 
   describe('@zreset', () => {
@@ -84,7 +102,7 @@ describe('admin/commands', () => {
       expect(invoker.room.zone.characters).toEqual([invoker, other, nonAdmin]);
       expect(invoker.room.characters).toEqual([invoker, other]);
       expect(nonAdmin.room.characters).toEqual([nonAdmin]);
-      Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'resetChar', name: 'Reset char' }, invoker.zone);
+      getCatalogSafely().registerCharacterDefinition({ key: 'resetChar', name: 'Reset char' }, invoker.zone);
       invoker.room.definition.resets = { characters: [{ key: 'resetChar@testZone' }] };
       callCommand(invoker, '@zreset');
       expect(invoker.emitTo).toBeCalledWith(`You clap your hands and the zone returns to normal.`);
@@ -100,11 +118,29 @@ describe('admin/commands', () => {
       nonAdmin.room.addItem(item2);
       expect(invoker.room.items).toEqual([item1]);
       expect(nonAdmin.room.items).toEqual([item2]);
-      Instance.gameServer?.catalog.registerItemDefinition({ key: 'resetItem', name: 'Reset item' }, invoker.zone);
+      getCatalogSafely().registerItemDefinition({ key: 'resetItem', name: 'Reset item' }, invoker.zone);
       invoker.room.definition.resets = { items: [{ key: 'resetItem@testZone' }] };
       callCommand(invoker, '@zreset');
       expect(invoker.room.items.map(({ key }) => key)).toEqual(['resetItem@testZone']);
       expect(nonAdmin.room.items).toEqual([]);
+    });
+
+    test('ends any npc conversatios', () => {
+      const conversationChar = buildCharacter(invoker.room.zone, 'convo', invoker.room);
+      const conversation = { endConversation: jest.fn() } as any;
+      conversationChar.conversation = conversation;
+      expect(invoker.room.characters).toContain(conversationChar);
+      callCommand(invoker, '@zreset');
+      expect(invoker.room.characters).not.toContain(conversationChar);
+      expect(conversation.endConversation).toBeCalled();
+    });
+
+    test(`sends a message to other players`, () => {
+      const otherPlayer = buildPlayer('player2', invoker.room);
+      expect(invoker.room.characters).toContain(otherPlayer);
+      callCommand(invoker, '@zreset');
+      expect(invoker.room.characters).toContain(otherPlayer);
+      expect(otherPlayer.emitTo).toBeCalledWith(`You hear a defening thunderclap and everything around you returns to normal.`);
     });
   });
 
@@ -126,6 +162,14 @@ describe('admin/commands', () => {
 <B>------------------------------<n>
 [newRoom1@otherZone] <y>newRoom1 name<n>
 [newRoom2@otherZone] <y>newRoom2 name<n>`);
+    });
+
+    test('shows none if no rooms defined for zone', () => {
+      const otherZone = buildZone({ key: 'otherZone', zoneName: 'Other zone' }, true);
+      callCommand(invoker, '@rlist otherZone');
+      expect(invoker.emitTo).toBeCalledWith(`<G>Rooms for <R>Other zone<n>
+<B>------------------------------<n>
+None`);
     });
   });
 
@@ -152,6 +196,24 @@ describe('admin/commands', () => {
       expect(invoker.room.items).toEqual([]);
       expect(nonAdmin.room.items).toEqual([item2]);
     });
+
+    test('ends any npc conversatios', () => {
+      const conversationChar = buildCharacter(invoker.room.zone, 'convo', invoker.room);
+      const conversation = { endConversation: jest.fn() } as any;
+      conversationChar.conversation = conversation;
+      expect(invoker.room.characters).toContain(conversationChar);
+      callCommand(invoker, '@rclear');
+      expect(invoker.room.characters).not.toContain(conversationChar);
+      expect(conversation.endConversation).toBeCalled();
+    });
+
+    test(`sends a message to other players`, () => {
+      const otherPlayer = buildPlayer('player2', invoker.room);
+      expect(invoker.room.characters).toContain(otherPlayer);
+      callCommand(invoker, '@rclear');
+      expect(invoker.room.characters).toContain(otherPlayer);
+      expect(otherPlayer.emitTo).toBeCalledWith(`You hear a thunderclap and the room empties.`);
+    });
   });
 
   describe('@rreset', () => {
@@ -159,7 +221,7 @@ describe('admin/commands', () => {
       expect(invoker.room.zone.characters).toEqual([invoker, other, nonAdmin]);
       expect(invoker.room.characters).toEqual([invoker, other]);
       expect(nonAdmin.room.characters).toEqual([nonAdmin]);
-      Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'resetChar', name: 'Reset char' }, invoker.zone);
+      getCatalogSafely().registerCharacterDefinition({ key: 'resetChar', name: 'Reset char' }, invoker.zone);
       invoker.room.definition.resets = { characters: [{ key: 'resetChar@testZone' }] };
       callCommand(invoker, '@rreset');
       expect(invoker.emitTo).toBeCalledWith(`You clap your hands and the room returns to normal.`);
@@ -175,11 +237,29 @@ describe('admin/commands', () => {
       nonAdmin.room.addItem(item2);
       expect(invoker.room.items).toEqual([item1]);
       expect(nonAdmin.room.items).toEqual([item2]);
-      Instance.gameServer?.catalog.registerItemDefinition({ key: 'resetItem', name: 'Reset item' }, invoker.zone);
+      getCatalogSafely().registerItemDefinition({ key: 'resetItem', name: 'Reset item' }, invoker.zone);
       invoker.room.definition.resets = { items: [{ key: 'resetItem@testZone' }] };
       callCommand(invoker, '@rreset');
       expect(invoker.room.items.map(({ key }) => key)).toEqual(['resetItem@testZone']);
       expect(nonAdmin.room.items).toEqual([item2]);
+    });
+
+    test('ends any npc conversatios', () => {
+      const conversationChar = buildCharacter(invoker.room.zone, 'convo', invoker.room);
+      const conversation = { endConversation: jest.fn() } as any;
+      conversationChar.conversation = conversation;
+      expect(invoker.room.characters).toContain(conversationChar);
+      callCommand(invoker, '@rreset');
+      expect(invoker.room.characters).not.toContain(conversationChar);
+      expect(conversation.endConversation).toBeCalled();
+    });
+
+    test(`sends a message to other players`, () => {
+      const otherPlayer = buildPlayer('player2', invoker.room);
+      expect(invoker.room.characters).toContain(otherPlayer);
+      callCommand(invoker, '@rreset');
+      expect(invoker.room.characters).toContain(otherPlayer);
+      expect(otherPlayer.emitTo).toBeCalledWith(`You hear a thunderclap and the room returns to normal.`);
     });
   });
 
@@ -207,8 +287,8 @@ describe('admin/commands', () => {
 
   describe('@clist', () => {
     test('lists characters registered to the zone', () => {
-      Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'char1', name: 'Char 1' }, invoker.zone);
-      Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'char2', name: 'Char 2' }, invoker.zone);
+      getCatalogSafely().registerCharacterDefinition({ key: 'char1', name: 'Char 1' }, invoker.zone);
+      getCatalogSafely().registerCharacterDefinition({ key: 'char2', name: 'Char 2' }, invoker.zone);
       callCommand(invoker, '@clist');
       expect(invoker.emitTo).toBeCalledWith(`<G>Characters for <R>Test zone<n>
 <B>------------------------------<n>
@@ -218,19 +298,27 @@ describe('admin/commands', () => {
 
     test('lists characters for other zone if key provided', () => {
       const otherZone = buildZone({ key: 'otherZone', zoneName: 'Other zone' }, true);
-      Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'char1', name: 'Char 1' }, otherZone);
-      Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'char2', name: 'Char 2' }, otherZone);
+      getCatalogSafely().registerCharacterDefinition({ key: 'char1', name: 'Char 1' }, otherZone);
+      getCatalogSafely().registerCharacterDefinition({ key: 'char2', name: 'Char 2' }, otherZone);
       callCommand(invoker, '@clist otherZone');
       expect(invoker.emitTo).toBeCalledWith(`<G>Characters for <R>Other zone<n>
 <B>------------------------------<n>
 [char1@otherZone] <y>Char 1<n>
 [char2@otherZone] <y>Char 2<n>`);
     });
+
+    test('shows none if no characters in zone', () => {
+      const otherZone = buildZone({ key: 'otherZone', zoneName: 'Other zone' }, true);
+      callCommand(invoker, '@clist otherZone');
+      expect(invoker.emitTo).toBeCalledWith(`<G>Characters for <R>Other zone<n>
+<B>------------------------------<n>
+None`);
+    });
   });
 
   describe('@cload', () => {
     test('loads character into current room', () => {
-      Instance.gameServer?.catalog.registerCharacterDefinition({ key: 'char1', name: 'Char 1' }, invoker.zone);
+      getCatalogSafely().registerCharacterDefinition({ key: 'char1', name: 'Char 1' }, invoker.zone);
       expect(invoker.room.characters.map(({ key }) => key)).toEqual(['invoker', 'other']);
       callCommand(invoker, '@cload char1');
       expect(invoker.room.characters.map(({ key }) => key)).toEqual(['invoker', 'other', 'char1@testZone']);
@@ -282,8 +370,8 @@ describe('admin/commands', () => {
 
   describe('@ilist', () => {
     test('lists items in zone', () => {
-      Instance.gameServer?.catalog.registerItemDefinition({ key: 'item1', name: 'Item 1', description: 'Item 1 description' }, invoker.zone);
-      Instance.gameServer?.catalog.registerItemDefinition({ key: 'item2', name: 'Item 2', description: 'Item 2 description' }, invoker.zone);
+      getCatalogSafely().registerItemDefinition({ key: 'item1', name: 'Item 1', description: 'Item 1 description' }, invoker.zone);
+      getCatalogSafely().registerItemDefinition({ key: 'item2', name: 'Item 2', description: 'Item 2 description' }, invoker.zone);
       callCommand(invoker, '@ilist');
       expect(invoker.emitTo).toBeCalledWith(`<G>Items for <R>Test zone<n>
 <B>------------------------------<n>
@@ -296,8 +384,8 @@ describe('admin/commands', () => {
 
     test('lists items for zone by key', () => {
       const otherZone = buildZone({ key: 'otherZone', zoneName: 'Other zone' }, true);
-      Instance.gameServer?.catalog.registerItemDefinition({ key: 'item1', name: 'Item 1', description: 'Item 1 description' }, otherZone);
-      Instance.gameServer?.catalog.registerItemDefinition({ key: 'item2', name: 'Item 2', description: 'Item 2 description' }, otherZone);
+      getCatalogSafely().registerItemDefinition({ key: 'item1', name: 'Item 1', description: 'Item 1 description' }, otherZone);
+      getCatalogSafely().registerItemDefinition({ key: 'item2', name: 'Item 2', description: 'Item 2 description' }, otherZone);
       callCommand(invoker, '@ilist otherZone');
       expect(invoker.emitTo).toBeCalledWith(`<G>Items for <R>Other zone<n>
 <B>------------------------------<n>
@@ -307,21 +395,26 @@ describe('admin/commands', () => {
 [item2@otherZone] <y>Item 2
 <D>Item 2 description<n>`);
     });
+
+    test('shows none if no items in zone', () => {
+      const otherZone = buildZone({ key: 'otherZone', zoneName: 'Other zone' }, true);
+      callCommand(invoker, '@ilist otherZone');
+      expect(invoker.emitTo).toBeCalledWith(`<G>Items for <R>Other zone<n>
+<B>------------------------------<n>
+None`);
+    });
   });
 
   describe('@iload', () => {
     test('loads item into inventory', () => {
-      Instance.gameServer?.catalog.registerItemDefinition({ key: 'item1', name: 'Item 1', description: 'Item 1 description' }, invoker.zone);
+      getCatalogSafely().registerItemDefinition({ key: 'item1', name: 'Item 1', description: 'Item 1 description' }, invoker.zone);
       callCommand(invoker, '@iload item1@testZone');
       expect(invoker.items.map(({ name }) => name)).toEqual(['Item 1']);
       expect(invoker.emitTo).toBeCalledWith(`<y>Item 1<n> loaded to your inventory.`);
     });
 
     test('supports applying modifications', () => {
-      Instance.gameServer?.catalog.registerItemDefinition(
-        { key: 'item1', name: '{size} item that is {color}', description: 'Item 1 description' },
-        invoker.zone
-      );
+      getCatalogSafely().registerItemDefinition({ key: 'item1', name: '{size} item that is {color}', description: 'Item 1 description' }, invoker.zone);
       callCommand(invoker, '@iload item1@testZone size=large color=red');
       expect(invoker.items.map(({ name }) => name)).toEqual(['large item that is red']);
     });
@@ -334,6 +427,11 @@ describe('admin/commands', () => {
     test('shows message if invalid syntax', () => {
       callCommand(invoker, '@iload item1@testZone large red');
       expect(invoker.emitTo).toBeCalledWith(`Invalid syntax: @iload {key} | {modification=value} {modification=value}`);
+    });
+
+    test('shows message if unknown item', () => {
+      callCommand(invoker, '@iload item1@testZone');
+      expect(invoker.emitTo).toBeCalledWith(`Unknown item: item1@testZone`);
     });
   });
 });

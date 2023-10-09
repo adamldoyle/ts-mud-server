@@ -1,4 +1,4 @@
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getCatalogSafely } from '@server/GameServerInstance';
 import { buildCharacter, buildItem, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { applyModifications, IItemDefinition, Item, ItemContainer, ItemFlag, matchItems } from './item';
 import { Room } from './room';
@@ -217,8 +217,8 @@ describe('core/entities/item', () => {
 
     describe('finalize', () => {
       test('adds contained items', () => {
-        Instance.gameServer?.catalog.registerItemDefinition({ key: 'child1', name: 'Child1' }, zone);
-        Instance.gameServer?.catalog.registerItemDefinition({ key: 'child2', name: 'Child2' }, zone);
+        getCatalogSafely().registerItemDefinition({ key: 'child1', name: 'Child1' }, zone);
+        getCatalogSafely().registerItemDefinition({ key: 'child2', name: 'Child2' }, zone);
         const parent = buildItem(zone, 'parent', { inventory: [{ key: 'child1' }, { key: 'child2' }] });
         expect(parent.items).toEqual([]);
         parent.finalize();

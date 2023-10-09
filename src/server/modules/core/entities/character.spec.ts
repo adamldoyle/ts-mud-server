@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getCatalogSafely, getGameServerSafely } from '@server/GameServerInstance';
 import { buildCharacter, buildItem, buildPlayer, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { Character, CharacterFlag, ICharacterDefinition, IPlayerDefinition, matchCharacters, Player } from './character';
 import { Room, RoomFlag } from './room';
@@ -108,7 +108,7 @@ describe('core/entities/character', () => {
 
     describe('finalize', () => {
       test('adds items to inventory based on definition', () => {
-        Instance.gameServer?.catalog.registerItemDefinition(
+        getCatalogSafely().registerItemDefinition(
           {
             key: 'testItem',
             name: 'Test item',
@@ -196,7 +196,7 @@ Inventory:
       });
 
       test('shows inventory', () => {
-        Instance.gameServer?.catalog.registerItemDefinition(
+        getCatalogSafely().registerItemDefinition(
           {
             key: 'testItem',
             name: 'Test item',
@@ -227,7 +227,7 @@ Inventory:
       });
 
       test('shows equipment', () => {
-        Instance.gameServer?.catalog.registerItemDefinition(
+        getCatalogSafely().registerItemDefinition(
           {
             key: 'testItem',
             name: 'Test item',
@@ -521,7 +521,7 @@ Inventory:
         origin.finalize();
         const invoker = buildCharacter(zone, 'invoker', origin);
         invoker.tick(0);
-        expect(Instance.gameServer?.handleCommand).toBeCalledWith(invoker, 'move north');
+        expect(getGameServerSafely().handleCommand).toBeCalledWith(invoker, 'move north');
       });
 
       test('prefers tick on definition to wandering', () => {
@@ -533,7 +533,7 @@ Inventory:
         const invoker = buildCharacter(zone, 'invoker', origin, { tick });
         invoker.tick(27);
         expect(tick).toBeCalledWith(invoker, 27);
-        expect(Instance.gameServer?.handleCommand).not.toBeCalled();
+        expect(getGameServerSafely().handleCommand).not.toBeCalled();
       });
 
       test(`character doesn't wander if involved in conversation`, () => {
@@ -545,7 +545,7 @@ Inventory:
         const conversation = { tick: jest.fn().mockReturnValue(false) };
         invoker.conversation = conversation as any;
         invoker.tick(27);
-        expect(Instance.gameServer?.handleCommand).not.toBeCalled();
+        expect(getGameServerSafely().handleCommand).not.toBeCalled();
       });
 
       test(`character doesn't wander if following someone`, () => {
@@ -557,7 +557,7 @@ Inventory:
         const target = buildCharacter(zone, 'target', origin);
         invoker.follow(target);
         invoker.tick(27);
-        expect(Instance.gameServer?.handleCommand).not.toBeCalled();
+        expect(getGameServerSafely().handleCommand).not.toBeCalled();
       });
 
       // Could use some more wander tests here
@@ -568,7 +568,7 @@ Inventory:
         origin.finalize();
         const invoker = buildCharacter(zone, 'invoker', origin, { flags: [CharacterFlag.SENTINEL] });
         invoker.tick(27);
-        expect(Instance.gameServer?.handleCommand).not.toBeCalled();
+        expect(getGameServerSafely().handleCommand).not.toBeCalled();
       });
     });
 
@@ -615,7 +615,7 @@ Inventory:
       test('sends command to game server for character', () => {
         const invoker = buildCharacter(zone, 'invoker', origin);
         invoker.sendCommand(`command test string`);
-        expect(Instance.gameServer?.handleCommand).toBeCalledWith(invoker, `command test string`);
+        expect(getGameServerSafely().handleCommand).toBeCalledWith(invoker, `command test string`);
       });
     });
 
@@ -664,11 +664,43 @@ Inventory:
         expect(player.room).toEqual(origin);
         expect(player.zone).toEqual(origin.zone);
       });
+
+      test('puts player in starting room if saved room no longer exists', () => {
+        const definition: IPlayerDefinition = {
+          accountId: 'testAccountId',
+          room: 'notaroom@testZone',
+          playerNumber: 27,
+          key: 'testplayer',
+          name: 'Testplayer',
+          race: RaceType.GNOME,
+          class: ClassType.CLERIC,
+          abilities: defaultAbilities(),
+        };
+        const starter = buildRoom(zone, 'starter');
+        getGameServerSafely().config.startingRoom = 'starter@testZone';
+        const player = new Player(definition);
+        expect(player.room).toEqual(starter);
+      });
+
+      test('throws error if saved room and starting room are invalid', () => {
+        const definition: IPlayerDefinition = {
+          accountId: 'testAccountId',
+          room: 'notaroom@testZone',
+          playerNumber: 27,
+          key: 'testplayer',
+          name: 'Testplayer',
+          race: RaceType.GNOME,
+          class: ClassType.CLERIC,
+          abilities: defaultAbilities(),
+        };
+        getGameServerSafely().config.startingRoom = 'notaroom@testZone';
+        expect(() => new Player(definition)).toThrowError();
+      });
     });
 
     describe('finalize', () => {
       test('adds items to inventory based on definition', () => {
-        Instance.gameServer?.catalog.registerItemDefinition(
+        getCatalogSafely().registerItemDefinition(
           {
             key: 'testItem',
             name: 'Test item',
@@ -710,7 +742,7 @@ Inventory:
         jest.spyOn(player.room, 'emitTo');
         player.finalize();
 
-        expect(Instance.gameServer?.sendMessageToCharacter).toBeCalledWith('Testplayer', `You appear in a cloud of smoke...\n`);
+        expect(getGameServerSafely().sendMessageToCharacter).toBeCalledWith('Testplayer', `You appear in a cloud of smoke...\n`);
         expect(player.room.emitTo).toBeCalledWith(`<c>Testplayer<n> appears in a cloud of smoke...`, [player]);
       });
 
@@ -729,7 +761,7 @@ Inventory:
         jest.spyOn(player.room, 'emitTo');
         player.finalize(true);
 
-        expect(Instance.gameServer?.sendMessageToCharacter).not.toBeCalled();
+        expect(getGameServerSafely().sendMessageToCharacter).not.toBeCalled();
         expect(player.room.emitTo).not.toBeCalled();
       });
     });
@@ -748,13 +780,21 @@ Inventory:
         player.disconnect();
         expect(origin.emitTo).toBeCalledWith(`<c>playername<n> disappears in a cloud of smoke...`, [player]);
       });
+
+      test('ends conversation if player is part of one', () => {
+        const player = buildPlayer('player', origin);
+        const conversation = { endConversation: jest.fn() } as any;
+        player.conversation = conversation;
+        player.disconnect();
+        expect(conversation.endConversation).toBeCalled();
+      });
     });
 
     describe('emitTo', () => {
       test('sends message to character via game server', () => {
         const player = buildPlayer('player', origin);
         player.emitTo('message to player');
-        expect(Instance.gameServer?.sendMessageToCharacter).toBeCalledWith(player.name, 'message to player\n');
+        expect(getGameServerSafely().sendMessageToCharacter).toBeCalledWith(player.name, 'message to player\n');
       });
     });
 

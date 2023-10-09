@@ -171,13 +171,23 @@ export const registerCommands = () => {
     name: 'inventory',
     aliases: ['i', 'inv'],
     handler: (invoker, command) => {
-      const response = parseArguments(invoker, command.params, '| char.room');
-      if (!response) {
+      const target = invoker;
+      invoker.emitTo(target.lookAtInventory(invoker));
+    },
+  });
+
+  commandHandler.registerCommand({
+    name: '@inventory',
+    aliases: ['@i', '@inv'],
+    admin: true,
+    handler: (invoker, command) => {
+      const response = parseArguments(invoker, command.params, 'char.room');
+      if (response?.length !== 1) {
         return invoker.emitTo(`Whose inventory do you want to see?`);
       }
 
-      const target = (response[0] as Character) ?? invoker;
-      invoker.emitTo(`${target}${invoker.admin ? ` [${target.key}]` : ''}\n${target.lookAtInventory(invoker)}`);
+      const target = response[0] as Character;
+      invoker.emitTo(`${target} [${target.key}]\n${target.lookAtInventory(invoker)}`);
     },
   });
 
@@ -185,13 +195,23 @@ export const registerCommands = () => {
     name: 'equipment',
     aliases: ['eq'],
     handler: (invoker, command) => {
-      const response = parseArguments(invoker, command.params, '| char.room');
-      if (!response) {
+      const target = invoker;
+      invoker.emitTo(lookAtEquipment(invoker, target));
+    },
+  });
+
+  commandHandler.registerCommand({
+    name: '@equipment',
+    aliases: ['@eq'],
+    admin: true,
+    handler: (invoker, command) => {
+      const response = parseArguments(invoker, command.params, 'char.room');
+      if (response?.length !== 1) {
         return invoker.emitTo(`Whose equipment do you want to see?`);
       }
 
-      const target = (response[0] as Character) ?? invoker;
-      invoker.emitTo(`${target}${invoker.admin ? ` [${target.key}]` : ''}\n${lookAtEquipment(invoker, target)}`);
+      const target = response[0] as Character;
+      invoker.emitTo(`${target} [${target.key}]\n${lookAtEquipment(invoker, target)}`);
     },
   });
 
@@ -228,6 +248,7 @@ export const registerCommands = () => {
       const item = response[0] as Item;
       const removeResponse = removeItem(invoker, item);
       if (!removeResponse[0]) {
+        // Shouldn't happen until we add some kind of restrictions on removing an item
         return invoker.emitTo(removeResponse[1]);
       }
 

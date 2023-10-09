@@ -3,7 +3,7 @@ import { v4 } from 'uuid';
 import { Constructor } from './base';
 import { BaseKeyedEntity, Zone } from './zone';
 import { Character } from './character';
-import { Instance } from '@server/GameServerInstance';
+import { getCatalogSafely } from '@server/GameServerInstance';
 import * as flagUtils from '../utils/flagUtils';
 import { BodyPosition } from './equipment';
 
@@ -129,7 +129,7 @@ export class Item extends ItemContainer(BaseKeyedEntity) {
 
   finalize() {
     this.definition.inventory?.forEach((invDefinition) => {
-      const item = Instance.gameServer?.catalog.loadItem(invDefinition.key, this.zone, invDefinition);
+      const item = getCatalogSafely().loadItem(invDefinition.key, this.zone, invDefinition);
       if (item) {
         this.addItem(item);
       }

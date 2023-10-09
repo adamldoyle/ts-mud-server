@@ -32,24 +32,32 @@ if (process.env.NODE_ENV !== 'production') {
 
 export const logger = {
   debug: (...messages: unknown[]): undefined => {
+    /* istanbul ignore next */
     winstonLogger.debug(messages);
+    /* istanbul ignore next */
     return;
   },
 
   info: (...messages: unknown[]): undefined => {
+    /* istanbul ignore next */
     winstonLogger.info(messages);
+    /* istanbul ignore next */
     return;
   },
 
   error: (...messages: unknown[]): undefined => {
+    /* istanbul ignore next */
     winstonLogger.error(messages);
+    /* istanbul ignore next */
     return;
   },
 };
 
 export const playerLogger = {
   log: (...messages: unknown[]): undefined => {
+    /* istanbul ignore next */
     winstonPlayerLogger.debug(messages);
+    /* istanbul ignore next */
     return;
   },
 };

@@ -2,7 +2,7 @@ import fs from 'fs';
 import { Server } from 'socket.io';
 import { ISettings } from '@shared/types';
 import { GameServer, TICK_TIME } from './GameServer';
-import { Instance } from './GameServerInstance';
+import { Instance, getCatalogSafely } from './GameServerInstance';
 import { buildCharacter, buildPlayer } from './testUtils';
 import { buildCommandHandler } from './modules/core/commands/CommandHandler';
 import * as account from '@shared/account';
@@ -140,7 +140,7 @@ describe('GameServer', () => {
   });
 
   const generatePlayer = (key = 'player') => {
-    const room = Instance.gameServer?.catalog
+    const room = getCatalogSafely()
       .getZones()
       .map((zone) => Object.values(zone.rooms))
       .flat()[0];
@@ -333,6 +333,25 @@ describe('GameServer', () => {
       expect(Object.keys(gameServer.playersById)).toEqual(['testAccountId']);
       expect(gameServer.partialLogins).toEqual({});
     });
+
+    test(`throws error if LoginConversation does not pass user to callback`, () => {
+      const playerAccount = { accountId: 'testAccountId', characterNames: ['Testcharacter'] };
+      (account.getPotentialAccount as jest.Mock).mockReturnValue(playerAccount);
+      const socket = {
+        on: jest.fn(),
+        emit: jest.fn(),
+      };
+      startWithMockSocket(socket);
+      expect(socket.on).toBeCalledWith('user.login', expect.anything());
+      const onUserLogin = socket.on.mock.calls.find((call) => call[0] === 'user.login')[1];
+      onUserLogin({ accountId: 'testAccountId', username: 'testUsername' });
+      expect(gameServer.playersById).toEqual({});
+      expect(Object.keys(gameServer.partialLogins)).toEqual(['testAccountId']);
+      expect(LoginConversation).toBeCalledWith(playerAccount, expect.anything());
+      (LoginConversation as jest.Mock).mock.calls[0][1](undefined);
+      expect(Object.keys(gameServer.playersById)).toEqual([]);
+      expect(Object.keys(gameServer.partialLogins)).toEqual(['testAccountId']);
+    });
   });
 
   describe('logoutUser', () => {
@@ -435,6 +454,14 @@ describe('GameServer', () => {
       gameServer.catalog.getZones().map((zone) => {
         expect(zone.toStorage).toBeCalled();
       });
+    });
+
+    test('saves all players', () => {
+      startWithMockSocket();
+      const player = { save: jest.fn() };
+      gameServer.playersById['testPlayer'] = player as any;
+      gameServer.save();
+      expect(player.save).toBeCalled();
     });
   });
 });

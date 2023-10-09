@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { ISavedAccount } from '@shared/types';
 import { saveAccount } from '@shared/account';
-import { Instance } from '@server/GameServerInstance';
+import { getGameServerSafely } from '@server/GameServerInstance';
 import { IPlayerDefinition, Player } from '@core/entities/character';
 import { stringUtils } from '@core/utils';
 import { Races, RaceType } from '@core/entities/race';
@@ -237,7 +237,11 @@ const handleNewCharacterClass = (state: NewCharacterClassState, sendMessage: Sen
   }
 
   if (help) {
-    sendMessage(`${clazz.display}\n\nHit die: ${clazz.hitDie}${outputClasses()}`);
+    sendMessage(`
+${clazz.display}
+
+Hit die: ${clazz.hitDie}
+${outputClasses()}`);
     return state;
   }
 
@@ -300,7 +304,7 @@ const createCharacter = (state: NewCharacterConfirmState, sendMessage: SendMessa
   const race = Races[state.raceType];
   const playerDefinition: IPlayerDefinition = {
     accountId: state.account.accountId,
-    room: Instance.gameServer?.config.startingRoom ?? '',
+    room: getGameServerSafely().config.startingRoom,
     key: state.characterName.toLowerCase(),
     name: state.characterName,
     playerNumber: playerCount + 1,
@@ -355,7 +359,7 @@ export class LoginConversation {
   completeCallback: (player?: Player) => void;
 
   constructor(account: ISavedAccount, completeCallback: (player?: Player) => void) {
-    this.sendMessage = (message: string) => Instance.gameServer?.sendMessageToAccount(account.accountId, message);
+    this.sendMessage = (message: string) => getGameServerSafely().sendMessageToAccount(account.accountId, message);
     this.completeCallback = completeCallback;
     this.state = { type: ConversationStateType.CHARACTER_PROMPT, account: account };
 

@@ -2,7 +2,7 @@ import { Exit, ExitFlag, Room } from '@core/entities/room';
 import { Zone } from '@core/entities/zone';
 import { Character, IPlayerDefinition } from '@core/entities/character';
 import { parseArguments } from './parseArguments';
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getCatalogSafely } from '@server/GameServerInstance';
 import { buildZone, buildRoom, buildCharacter, buildItem, buildExit, initializeTestServer } from '@server/testUtils';
 
 jest.mock('@server/GameServer');
@@ -16,7 +16,7 @@ describe('core/commands/parseArguments', () => {
   beforeEach(() => {
     initializeTestServer();
     zone = buildZone();
-    Instance.gameServer?.catalog.registerZone(zone);
+    getCatalogSafely().registerZone(zone);
     invokerRoom = buildRoom(zone, 'testRoom1');
     otherRoom = buildRoom(zone, 'testRoom2');
     invoker = buildCharacter(zone, 'invoker', invokerRoom, { accountId: 'invokerAccount' } as IPlayerDefinition);
@@ -343,6 +343,11 @@ describe('core/commands/parseArguments', () => {
       const response = parseArguments(invoker, ['testZone'], 'zone');
       expect(response).toEqual([zone]);
     });
+
+    test('returns undefined if unknown zone', () => {
+      const response = parseArguments(invoker, ['notazone'], 'zone');
+      expect(response).toBeUndefined();
+    });
   });
 
   describe('word matching', () => {
@@ -380,10 +385,21 @@ describe('core/commands/parseArguments', () => {
       expect(response?.[0].key).toEqual('otherUser1');
     });
 
+    test('fails if specific word is a mismatch', () => {
+      let response = testParseArguments(invoker, ['test1'], 'test2');
+      expect(response).toBeUndefined();
+    });
+
     test('can skip optional strings', () => {
       buildCharacter(zone, 'otherUser1', invokerRoom);
       let response = testParseArguments(invoker, ['otherUser1'], '[at] char.room');
       expect(response?.[0].key).toEqual('otherUser1');
+    });
+
+    test('can handle optional string at end', () => {
+      buildCharacter(zone, 'otherUser1', invokerRoom);
+      let response = testParseArguments(invoker, [], '[at]');
+      expect(response).toEqual([]);
     });
 
     test('fails if optional string is a mismatch', () => {

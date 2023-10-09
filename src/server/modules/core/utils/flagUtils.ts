@@ -7,7 +7,7 @@ export const mergeFlags = (flags?: RawFlags | FlagsType): Flag => {
     return 0;
   }
   if (Array.isArray(flags)) {
-    return (flags ?? []).reduce((acc, flag) => acc | flag, 0);
+    return flags.reduce((acc, flag) => acc | flag, 0);
   }
   return flags;
 };

@@ -1,4 +1,4 @@
-import { Instance } from '@server/GameServerInstance';
+import { Instance, getGameServerSafely } from '@server/GameServerInstance';
 import { buildCharacter, buildItem, buildRoom, buildZone, initializeTestServer } from '@server/testUtils';
 import { Character } from '@core/entities/character';
 import { registerCommands } from './commands';
@@ -42,7 +42,7 @@ describe('exploration/commands', () => {
   });
 
   const callCommand = (invoker: Character, rawInput: string) => {
-    Instance.gameServer?.commandHandler.handleCommand(invoker, rawInput, undefined);
+    getGameServerSafely().commandHandler.handleCommand(invoker, rawInput, undefined);
   };
 
   describe('look', () => {

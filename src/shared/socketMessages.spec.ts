@@ -21,6 +21,15 @@ describe('shared/socketMessages', () => {
       socketMessages.UserLogin.listen(socket, callback);
       expect(socket.on).toBeCalledWith('user.login', callback);
     });
+
+    test('throws error if socket is undefined on send', () => {
+      const payload = { accountId: 'testAccount', username: 'testUsername', characterName: 'testCharacter' };
+      expect(() => socketMessages.UserLogin.send(undefined, payload)).toThrowError();
+    });
+
+    test('throws error if socket is undefined on listen', () => {
+      expect(() => socketMessages.UserLogin.listen(undefined, () => {})).toThrowError();
+    });
   });
 
   describe('CharacterLogin', () => {
